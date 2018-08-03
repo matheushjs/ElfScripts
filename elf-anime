@@ -1,0 +1,24 @@
+#!/bin/bash
+
+function help_msg() {
+	echo "Usage: $0 [option] [arguments]";
+	echo;
+	echo "Available options:";
+	echo "    list         - prints all animes";
+	echo "    rand         - prints a random anime";
+};
+
+while [[ "$#" > 0 ]]; do case $1 in
+	list)
+		echo "list";;
+	rand)
+		echo "rand";;
+	*)
+		help_msg;
+		exit 1;;
+esac; shift; done;
+
+if [ $# == 0 ]; then
+	help_msg;
+	exit 0;
+fi;
