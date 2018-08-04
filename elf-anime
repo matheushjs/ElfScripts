@@ -24,8 +24,9 @@ function help_msg() {
 "Usage: elf-anime [option] [arguments]
 
 Available options:
-    list         - prints all animes
-    rand         - prints a random anime";
+    list                - prints all animes
+    add [name] [rating] - adds an anime
+    rand                - prints a random anime";
 };
 
 function anime_list() {
