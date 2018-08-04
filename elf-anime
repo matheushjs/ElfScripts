@@ -21,7 +21,7 @@ fi;
 # ==========================
 function help_msg() {
 	echo \
-"Usage: $0 [option] [arguments]
+"Usage: elf-anime [option] [arguments]
 
 Available options:
     list         - prints all animes
@@ -36,6 +36,10 @@ function anime_rand() {
 	anime_list | sort -R | tail -1;
 }
 
+function anime_add() {
+	sqlite3 ~/Warehouse/$db_name "INSERT INTO ratings(name, rating) VALUES ('$1', $2);" &> /dev/null;
+	anime_list | tail -1;
+}
 
 # ==========================
 # No Arguments Given, Print Help
@@ -54,6 +58,17 @@ while [[ "$#" > 0 ]]; do case $1 in
 		anime_list;;
 	rand)
 		anime_rand;;
+	add)
+		if [ $# != 3 ]; then
+			echo "Insufficient number of arguments.";
+			echo;
+			help_msg;
+			exit 1;
+		fi;
+		name=$2;
+		rating=$3;
+		anime_add "$name" "$rating";
+		shift; shift;;
 	*)
 		help_msg;
 		exit 1;;
