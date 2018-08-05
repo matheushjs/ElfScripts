@@ -1,22 +1,25 @@
 #!/bin/bash
 
-FILENAME="$HOME/.l_backupCheck.txt";
+# Ensure Warehouse exists
+mkdir -p ~/Warehouse
+
+FILENAME="$HOME/Warehouse/.l-backupcheck.txt";
 
 function backup {
 	# Calculate date for executing next backup
-	deadline=$( date "+%C%y%m%d" -d "+2 days" );
+	deadline=$( date "+%C%y%m%d" -d "+1 days" );
 
 	# Overwrite control file
 	echo $deadline > $FILENAME;
 
 	# Backup
-	l_backupssh;
+	l-backupssh;
 
 	# Tell user new deadline.
 	echo;
 	echo;
 	echo "Backup finished."
-	echo "New deadline set to:" $(date -d "+2 days")
+	echo "New deadline set to:" $(date -d "+1 days")
 }
 
 # Check if file exists
