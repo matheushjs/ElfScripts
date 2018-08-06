@@ -1,2 +1,2 @@
 #!/bin/bash
-ssh mathjs@`l_getip`
+ssh mathjs@`l-getip`
