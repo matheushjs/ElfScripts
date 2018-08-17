@@ -13,8 +13,9 @@ function backup {
 	echo $deadline > $FILENAME;
 
 	# Backup
-	l-backup home send;
-	l-backup local send;
+	l-backup home get;
+	l-backup home send delete;
+	l-backup "local" send delete;
 
 	# Tell user new deadline.
 	echo;
