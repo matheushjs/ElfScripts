@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# Help message
+helpmsg=\
+"Usage: elf-ip [arguments]
+
+Where [arguments] can be:
+	home         - ip of your home workstation
+";
+if [ $# -eq 0 ]; then
+	echo "$helpmsg"
+	exit 0;
+fi
+
+# Actions
+case $1 in
+	home)
+		curl mjsaldanha.com/myip ;;
+esac;
