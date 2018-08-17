@@ -58,9 +58,10 @@ if   [[ $arghome = "true" && $argsend = "true" && $argdelete = "false" ]]; then
 elif [[ $arghome = "true" && $argsend = "true" && $argdelete = "true" ]]; then
 	echo "home send delete";
 	rsync -avz --delete --ignore-errors ~/ mathjs@$myip:$remote_dir;
-elif [[ $arghome = "true" && $argget = "true" && $argdelete = "true" ]]; then
+elif [[ $arghome = "true" && $argget = "true" ]]; then
 	echo "home get";
-	rsync -avz mathjs@$myip:$remote_dir ~/;
+	src="$remote_dir/ComputerS $remote_dir/Documents $remote_dir/Music $remote_dir/Pictures $remote_dir/Studies $remote_dir/Videos"
+	rsync -avz mathjs@$myip:"$src" ~/;
 elif [[ $arglocal = "true" && $argsend = "true" && $argdelete = "false" ]]; then
 	echo "local send";
 	rsync -avz ~/ mhjs@$localip:$remote_dir;
