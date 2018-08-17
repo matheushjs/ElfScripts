@@ -6,6 +6,7 @@ helpmsg=\
 
 Where [arguments] can be:
 	home         - ssh to your home workstation
+	lasdpc       - ssh to your lasdpc workstation
 ";
 if [ $# -eq 0 ]; then
 	echo "$helpmsg"
@@ -16,4 +17,6 @@ fi
 case $1 in
 	home)
 		ssh mathjs@`elf-ip home` ;;
+	lasdpc)
+		ssh mathjs@localhost -p 10000 ;;
 esac;
