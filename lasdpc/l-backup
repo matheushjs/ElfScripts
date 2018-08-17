@@ -1,6 +1,6 @@
 #!/bin/bash
 
-remote_dir=~/Shared/lasdpc
+remote_dir="~/Shared/lasdpc"
 
 # Help message
 helpmsg=\
