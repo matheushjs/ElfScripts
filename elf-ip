@@ -2,7 +2,7 @@
 
 # Help message
 helpmsg=\
-"Usage: elf-ip [arguments]
+"Usage: $0 [arguments]
 
 Where [arguments] can be:
 	home         - ip of your home workstation

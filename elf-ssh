@@ -2,7 +2,7 @@
 
 # Help message
 helpmsg=\
-"Usage: elf-ssh [arguments]
+"Usage: $0 [arguments]
 
 Where [arguments] can be:
 	home         - ssh to your home workstation

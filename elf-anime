@@ -21,7 +21,7 @@ fi;
 # ==========================
 function help_msg() {
 	echo \
-"Usage: elf-anime [option] [arguments]
+"Usage: $0 [option] [arguments]
 
 Available options:
     list                - prints all animes
