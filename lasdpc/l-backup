@@ -9,7 +9,7 @@ helpmsg=\
 Where [arguments] can be (in any order):
 	home send         - backup to your home workstation
 	home send delete  - backup to your home workstation, deleting extraneous files
-	home get          - get files from home workstation
+	home get          - get files from home workstation, skipping files newer locally
 	local send        - backup to local off-VM workstation, deleting extraneous files
 	local send delete - backup to local off-VM workstation, deleting extraneous files
 ";
@@ -61,7 +61,7 @@ elif [[ $arghome = "true" && $argsend = "true" && $argdelete = "true" ]]; then
 elif [[ $arghome = "true" && $argget = "true" ]]; then
 	echo "home get";
 	src="$remote_dir/ComputerS $remote_dir/Documents $remote_dir/Music $remote_dir/Pictures $remote_dir/Studies $remote_dir/Videos"
-	rsync -avz mathjs@$myip:"$src" ~/;
+	rsync -avuz mathjs@$myip:"$src" ~/;
 elif [[ $arglocal = "true" && $argsend = "true" && $argdelete = "false" ]]; then
 	echo "local send";
 	rsync -avz ~/ mhjs@$localip:$remote_dir;
