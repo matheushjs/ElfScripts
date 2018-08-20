@@ -13,8 +13,11 @@ function backup {
 	echo $deadline > $FILENAME;
 
 	# Backup
+	notify-send "Password requested on backup program."
 	l-backup home get;
+	notify-send "Password requested on backup program."
 	l-backup home send delete;
+	notify-send "Password requested on backup program."
 	l-backup "local" send delete;
 
 	# Tell user new deadline.
