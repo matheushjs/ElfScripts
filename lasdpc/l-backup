@@ -61,7 +61,7 @@ elif [[ $arghome = "true" && $argsend = "true" && $argdelete = "true" ]]; then
 elif [[ $arghome = "true" && $argget = "true" ]]; then
 	echo "home get";
 	src="$remote_dir/ComputerS $remote_dir/Documents $remote_dir/Music $remote_dir/Pictures $remote_dir/Studies $remote_dir/Videos"
-	rsync -avuz mathjs@$myip:"$src" ~/;
+	rsync -avuz --exclude ".git" mathjs@$myip:"$src" ~/;
 elif [[ $arglocal = "true" && $argsend = "true" && $argdelete = "false" ]]; then
 	echo "local send";
 	rsync -avz ~/ mhjs@$localip:$remote_dir;
