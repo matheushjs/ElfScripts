@@ -14,8 +14,6 @@ function backup {
 
 	# Backup
 	notify-send "Password requested on backup program."
-	elf-backup home get;
-	notify-send "Password requested on backup program."
 	elf-backup home send delete;
 	notify-send "Password requested on backup program."
 	elf-backup "local" send delete;
