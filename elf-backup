@@ -1,0 +1,164 @@
+#!/bin/bash
+
+shared_lasdpc_dir="Shared/lasdpc"
+
+# Help message
+helpmsg=\
+"Usage: $0 [arguments]
+
+Where [arguments] can be (in any order):
+
+	- Available to the LaSDPC workstation
+		home send         - backup to your home workstation
+		home send delete  - same as above, deleting extraneous files
+		home get          - get files from home workstation, skipping files newer locally
+		local send        - backup to local off-VM workstation
+		local send delete - same as above, deleting extraneous files
+	
+	- Available to the home workstation
+		lasdpc send        - send local shared lasdpc folder to the lasdpc workstation
+		lasdpc send delete - same as above, deleting extraneous files
+		lasdpc get         - get lasdpc files to the local lasdpc folder, skipping files newer locally
+";
+if [ $# -eq 0 ]; then
+	echo "$helpmsg"
+	exit 0;
+fi
+
+
+arghome=false
+arglocal=false
+argsend=false
+argget=false
+argdelete=false
+arglasdpc=false
+
+# ==========================
+# Parse User Arguments
+# ==========================
+while [[ "$#" > 0 ]]; do case $1 in
+	home)
+		arghome=true;;
+	local)
+		arglocal=true;;
+	send)
+		argsend=true;;
+	get)
+		argget=true;;
+	delete)
+		argdelete=true;;
+	lasdpc)
+		arglasdpc=true;;
+esac; shift; done;
+
+# Some pre-processing
+myip=""
+localip="10.0.0.100"
+if [ $arghome = "true" ]; then
+	myip=$(elf-ip home);
+fi
+
+home_s=false
+home_sd=false
+home_g=false
+local_s=false
+local_sd=false
+lasdpc_s=false
+lasdpc_sd=false
+lasdpc_g=false
+
+# ==========================
+# Decide functionality
+# ==========================
+if   [[ $arghome = "true" && $argsend = "true" && $argdelete = "false" ]]; then
+	echo home send;
+	home_s=true;
+elif [[ $arghome = "true" && $argsend = "true" && $argdelete = "true" ]]; then
+	echo home send delete;
+	home_sd=true;
+elif [[ $arghome = "true" && $argget = "true" ]]; then
+	echo home get;
+	home_g=true;
+elif [[ $arglocal = "true" && $argsend = "true" && $argdelete = "false" ]]; then
+	echo local send;
+	local_s=true;
+elif [[ $arglocal = "true" && $argsend = "true" && $argdelete = "true" ]]; then
+	echo local send delete;
+	local_sd=true;
+elif [[ $arglasdpc = "true" && $argsend = "true" && $argdelete = "false" ]]; then
+	echo lasdpc send;
+	lasdpc_s=true;
+elif [[ $arglasdpc = "true" && $argsend = "true" && $argdelete = "true" ]]; then
+	echo lasdpc send delete;
+	lasdpc_sd=true;
+elif [[ $arglasdpc = "true" && $argget = "true" ]]; then
+	echo lasdpc get;
+	lasdpc_g=true;
+fi
+
+# ==========================
+# Validate hostname
+# ==========================
+host=$( hostname );
+if [[ $arghome = "true" || $arglocal = "true" ]]; then
+	if [[ $host != "matheushjs-lasdpc" ]]; then
+		echo "ERROR: Command used is only available on LaSDPC workstation!";
+		exit 1;
+	fi
+elif [[ $arglasdpc = "true" ]]; then
+	if [[ $host != "matheushjs" ]]; then
+		echo "ERROR: Command used is only available on home workstation!";
+		exit 1;
+	fi
+fi
+
+
+# ==========================
+# Execute functionality
+# ==========================
+excludes=".git node_modules .cache .npm"
+excludes=$(for i in $excludes; do echo -n "--exclude" "$i "; done)
+
+# home send
+if   [[ $home_s = "true" ]]; then
+	rsync -avz $excludes ~/ mathjs@$myip:~/$shared_lasdpc_dir;
+
+# home send delete
+elif [[ $home_sd = "true" ]]; then
+	rsync -avz $excludes --delete --ignore-errors ~/ mathjs@$myip:~/$shared_lasdpc_dir;
+
+# home get
+elif [[ $home_g = "true" ]]; then
+	# Directories to backup
+	src="ComputerS Documents Music Pictures Studies Videos";
+	# Prepend the shared directory
+	src=$(for i in $src; do echo -n "~/"$shared_lasdpc_dir/$i" "; done);
+
+	rsync -avuz $excludes mathjs@$myip:"$src" ~/;
+
+# local send
+elif [[ $local_s = "true" ]]; then
+	rsync -avz $excludes ~/ mhjs@$localip:~/$shared_lasdpc_dir;
+
+# local send delete
+elif [[ $local_sd = "true" ]]; then
+	rsync -avz $excludes --delete --ignore-errors ~/ mhjs@$localip:~/$shared_lasdpc_dir;
+
+# lasdpc send
+elif [[ $lasdpc_s = "true" ]]; then
+	rsync -avz $excludes -e "ssh -p 10000" ~/$shared_lasdpc_dir/ mathjs@localhost:~/;
+
+# lasdpc send delete
+elif [[ $lasdpc_sd = "true" ]]; then
+	rsync -avz $excludes -e "ssh -p 10000" --delete --ignore-errors ~/$shared_lasdpc_dir/ mathjs@localhost:~/;
+
+# lasdpc get
+elif [[ $lasdpc_g = "true" ]]; then
+	# Directories to backup
+	src="ComputerS Documents Music Pictures Studies Videos";
+	# Prepend the shared directory
+	src=$(for i in $src; do echo -n "~/"$i" "; done);
+
+	rsync -avuz $excludes -e "ssh -p 10000" mathjs@localhost:"$src" ~/$shared_lasdpc_dir/;
+fi
+
