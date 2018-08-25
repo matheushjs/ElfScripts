@@ -15,5 +15,5 @@ fi
 # Actions
 case $1 in
 	home)
-		curl https://mjsaldanha.com/myip ;;
+		curl mjsaldanha.com/myip ;;
 esac;
