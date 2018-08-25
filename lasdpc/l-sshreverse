@@ -1,2 +1,5 @@
 #!/bin/bash
-ssh -N -R 10000:localhost:22 mathjs@`elf-ip home`
+while [ true ]; do
+	ssh -N -R 10000:localhost:22 mathjs@`elf-ip home`;
+	sleep 60;
+done
