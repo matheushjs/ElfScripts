@@ -13,6 +13,14 @@ function backup {
 	echo $deadline > $FILENAME;
 
 	# Backup
+	echo "Did you change anything at home? [Y/n]"
+	read -n 1 answer
+	echo;
+	if [[ $answer == "y" || $answer == "Y" ]]; then
+		echo "Getting files from home."
+		notify-send "Password requested on backup program."
+		elf-backup home get;
+	fi
 	notify-send "Password requested on backup program."
 	elf-backup home send delete;
 	notify-send "Password requested on backup program."
