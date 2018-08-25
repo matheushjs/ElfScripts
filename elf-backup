@@ -119,6 +119,7 @@ echo "
 /.*
 /bin
 /Desktop
+/Warehouse
 .git
 node_modules
 .npm
