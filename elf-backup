@@ -1,7 +1,5 @@
 #!/bin/bash
 
-shared_lasdpc_dir="Shared/lasdpc"
-
 # Help message
 helpmsg=\
 "Usage: $0 [arguments]
@@ -116,49 +114,58 @@ fi
 # ==========================
 # Execute functionality
 # ==========================
-excludes=".git node_modules .cache .npm"
-excludes=$(for i in $excludes; do echo -n "--exclude" "$i "; done)
+
+echo "
+/.*
+/bin
+/Desktop
+.git
+node_modules
+.npm
+" > /tmp/rsync-exclude-many.txt
+
+# We will only exclude when we are pushing the the original machine.
+# When we pull from the original machine, we pull everything.
+EXCLUDE="--exclude-from=/tmp/rsync-exclude-many.txt"
 
 # home send
 if   [[ $home_s = "true" ]]; then
-	rsync -avz $excludes ~/ mathjs@$myip:~/$shared_lasdpc_dir;
+	rsync -v -n -az \
+		~/ mathjs@$myip:"Shared/lasdpc";
 
 # home send delete
 elif [[ $home_sd = "true" ]]; then
-	rsync -avz $excludes --delete --ignore-errors ~/ mathjs@$myip:~/$shared_lasdpc_dir;
+	rsync -v -n -az --delete --ignore-errors \
+		~/ mathjs@$myip:"Shared/lasdpc";
 
 # home get
 elif [[ $home_g = "true" ]]; then
-	# Directories to backup
-	src="ComputerS Documents Music Pictures Studies Videos";
-	# Prepend the shared directory
-	src=$(for i in $src; do echo -n "~/"$shared_lasdpc_dir/$i" "; done);
-
-	rsync -avuz $excludes mathjs@$myip:"$src" ~/;
+	rsync -v -n -auz $EXCLUDE \
+		mathjs@$myip:"Shared/lasdpc/" ~/;
 
 # local send
 elif [[ $local_s = "true" ]]; then
-	rsync -avz $excludes ~/ mhjs@$localip:~/$shared_lasdpc_dir;
+	rsync -v -n -az \
+		~/ mhjs@$localip:"Shared/lasdpc";
 
 # local send delete
 elif [[ $local_sd = "true" ]]; then
-	rsync -avz $excludes --delete --ignore-errors ~/ mhjs@$localip:~/$shared_lasdpc_dir;
+	rsync -v -n -az --delete --ignore-errors \
+		~/ mhjs@$localip:"Shared/lasdpc";
 
 # lasdpc send
 elif [[ $lasdpc_s = "true" ]]; then
-	rsync -avz $excludes -e "ssh -p 10000" ~/$shared_lasdpc_dir/ mathjs@localhost:~/;
+	rsync -v -n -az $EXCLUDE -e "ssh -p 10000" \
+		~/Shared/lasdpc/ mathjs@localhost: ;
 
 # lasdpc send delete
 elif [[ $lasdpc_sd = "true" ]]; then
-	rsync -avz $excludes -e "ssh -p 10000" --delete --ignore-errors ~/$shared_lasdpc_dir/ mathjs@localhost:~/;
+	rsync -v -n -az $EXCLUDE -e "ssh -p 10000" --ignore-errors \
+		~/Shared/lasdpc/ mathjs@localhost: ;
 
 # lasdpc get
 elif [[ $lasdpc_g = "true" ]]; then
-	# Directories to backup
-	src="ComputerS Documents Music Pictures Studies Videos";
-	# Prepend the shared directory
-	src=$(for i in $src; do echo -n "~/"$i" "; done);
-
-	rsync -avuz $excludes -e "ssh -p 10000" mathjs@localhost:"$src" ~/$shared_lasdpc_dir/;
+	rsync -v -n -auz -e "ssh -p 10000" \
+		mathjs@localhost:"./" ~/Shared/lasdpc/;
 fi
 
