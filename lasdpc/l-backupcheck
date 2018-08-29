@@ -14,9 +14,9 @@ function backup {
 
 	# Backup
 	echo "Did you change anything at home? [Y/n]"
-	read -n 1 answer
+	read answer
 	echo;
-	if [[ $answer == "y" || $answer == "Y" ]]; then
+	if [[ "$answer" == @(y|Y|yes|Yes) ]]; then
 		echo "Getting files from home."
 		notify-send "Password requested on backup program."
 		elf-backup home get;
