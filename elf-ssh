@@ -16,7 +16,7 @@ fi
 # Actions
 case $1 in
 	home)
-		ssh mathjs@`elf-ip home` ;;
+		ssh -i "$HOME/.ssh/passless" mathjs@`elf-ip home` ;;
 	lasdpc)
-		ssh mathjs@localhost -p 10000 ;;
+		ssh -i "$HOME/.ssh/passless" mathjs@localhost -p 10000 ;;
 esac;
