@@ -64,7 +64,18 @@ while [ 1 ]; do
 		done
 	done
 
-	# Send different, new IP
-	curl -d ip="`bash ~/ComputerS/bash/system_help/dns_lookup.bash`" mjsaldanha.com/myip;
+	# Send different, new IP. First try HTTP, then HTTPS
+	res=$( curl -s -d ip="`bash ~/ComputerS/bash/system_help/dns_lookup.bash`" mjsaldanha.com/myip );
+	echo "HTTP response: " $res;
+	if [[ "$res" != "Ok" ]]; then
+		res=$( curl -s --proto-default https -d ip="`bash ~/ComputerS/bash/system_help/dns_lookup.bash`" mjsaldanha.com/myip );
+		echo "HTTPS response: " $res;
+	fi
+
+	# If neither protocol works
+	if [[ "$res" != "Ok" ]]; then
+		echo "Error sending IP!!!";
+	fi
+
 	echo
 done
