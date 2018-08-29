@@ -18,12 +18,9 @@ function backup {
 	echo;
 	if [[ "$answer" == @(y|Y|yes|Yes) ]]; then
 		echo "Getting files from home."
-		notify-send "Password requested on backup program."
 		elf-backup home get;
 	fi
-	notify-send "Password requested on backup program."
 	elf-backup home send delete;
-	notify-send "Password requested on backup program."
 	elf-backup "local" send delete;
 
 	# Tell user new deadline.
