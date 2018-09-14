@@ -15,5 +15,14 @@ fi
 # Actions
 case $1 in
 	home)
-		curl -L mjsaldanha.com/myip ;;
+		ip=$( curl -m 10 -L mjsaldanha.com/myip 2> /dev/null ); # Get from website
+		if [ "$?" != "0" ]; then
+			echo "Failed to get IP from website. Using previously saved one."
+			ip=$( cat ~/Warehouse/.elf-ip-home 2> /dev/null );  # Get from file
+		else
+			echo $ip > ~/Warehouse/.elf-ip-home; # Save to file
+		fi
+
+		echo $ip; # Print to stdin
+		;;
 esac;
