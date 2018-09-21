@@ -13,8 +13,8 @@ while [ true ]; do
 	lock+=1;
 
 	# Check if website is working
-	curl https://mjsaldanha.com &> /dev/null;
-	if [[ "$?" == 0 ]]; then
+	response=$(curl --write-out %{http_code} -s -o /dev/null https://mjsaldanha.com);
+	if [[ "$response" == "200" ]]; then
 		echo "OK $(date "+%H:%M:%S %d-%m-%y")" >> $logfile;
 		continue;
 	fi # If not working, continue below
