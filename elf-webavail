@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# This script will track availability of mjsaldanha.com
+
+logfile=~/Warehouse/.elf-webavail.log
+
+# Erase log file
+rm -f $logfile
+
+lock=0;
+while [ true ]; do
+	if [[ "$lock" != "0" ]]; then sleep 30; fi
+	lock+=1;
+
+	# Check if website is working
+	curl https://mjsaldanha.com &> /dev/null;
+	if [[ "$?" == 0 ]]; then
+		echo "OK $(date "+%H:%M:%S %d-%m-%y")" >> $logfile;
+		continue;
+	fi # If not working, continue below
+
+	# Check if network is working
+	curl google.com &> /dev/null;
+	echo
+	if [[ "$?" == 0 ]]; then
+		echo "Website is not working!" "$(date "+%H:%M:%S %d-%m-%y")"; # Because google.com is working, but our website isnt
+		echo "FAIL $(date "+%H:%M:%S %d-%m-%y")" >> $logfile;
+		notify-send "Website is not working!";
+	else
+		echo "False alarm. Network is not working.";
+		echo "NETWORK $(date "+%H:%M:%S %d-%m-%y")" >> $logfile;
+	fi
+done
