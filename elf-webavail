@@ -13,16 +13,15 @@ while [ true ]; do
 	lock+=1;
 
 	# Check if website is working
-	response=$(curl --write-out %{http_code} -s -o /dev/null https://mjsaldanha.com/myip);
-	if [[ "$response" == "200" ]]; then
+	response=$(curl -m 5 --write-out %{http_code} -s -o /dev/null https://mjsaldanha.com/myip);
+	if [[ "$?" == "0" && "$response" == "200" ]]; then
 		echo "OK $(date "+%H:%M:%S %d-%m-%y")" >> $logfile;
 		continue;
 	fi # If not working, continue below
 
 	# Check if network is working
-	curl google.com &> /dev/null;
-	echo
-	if [[ "$?" == 0 ]]; then
+	curl -m 5 google.com &> /dev/null;
+	if [[ "$?" == "0" ]]; then
 		echo "Website is not working!" "$(date "+%H:%M:%S %d-%m-%y")"; # Because google.com is working, but our website isnt
 		echo "FAIL $(date "+%H:%M:%S %d-%m-%y")" >> $logfile;
 		notify-send "Website is not working!";
