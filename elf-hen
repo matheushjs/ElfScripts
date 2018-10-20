@@ -1,0 +1,76 @@
+#!/bin/bash
+
+db_name=elf-hen.db
+
+# ==========================
+# Check Database Existence
+# ==========================
+if ! [ -a ~/Warehouse/$db_name ]; then
+	mkdir -p ~/Warehouse;
+	sqlite3 ~/Warehouse/$db_name "
+		CREATE TABLE ratings (name TEXT, rating INTEGER, date TEXT DEFAULT '');
+		CREATE TRIGGER track_date AFTER INSERT ON ratings
+		BEGIN
+		UPDATE ratings SET date = datetime('now') WHERE name=new.name;
+		END;";
+fi;
+
+
+# ==========================
+# Functions for Actual Functionalities
+# ==========================
+function help_msg() {
+	echo \
+"Usage: $0 [option] [arguments]
+
+Available options:
+    list                - prints all animes
+    add [name] [rating] - adds an anime
+    rand                - prints a random anime";
+};
+
+function anime_list() {
+	sqlite3 ~/Warehouse/$db_name ".width -50" "select * from ratings" 2> /dev/null | tail -n +4;
+};
+
+function anime_rand() {
+	anime_list | sort -R | tail -1;
+}
+
+function anime_add() {
+	sqlite3 ~/Warehouse/$db_name "INSERT INTO ratings(name, rating) VALUES ('$1', $2);" &> /dev/null;
+	anime_list | tail -1;
+}
+
+# ==========================
+# No Arguments Given, Print Help
+# ==========================
+if [ $# == 0 ]; then
+	help_msg;
+	exit 0;
+fi;
+
+
+# ==========================
+# Parse User Arguments
+# ==========================
+while [[ "$#" > 0 ]]; do case $1 in
+	list)
+		anime_list;;
+	rand)
+		anime_rand;;
+	add)
+		if [ $# != 3 ]; then
+			echo "Insufficient number of arguments.";
+			echo;
+			help_msg;
+			exit 1;
+		fi;
+		name=$2;
+		rating=$3;
+		anime_add "$name" "$rating";
+		shift; shift;;
+	*)
+		help_msg;
+		exit 1;;
+esac; shift; done;
