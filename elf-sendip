@@ -4,7 +4,7 @@ myip="localhost"
 
 # Looks up our local IP
 function ip_lookup {
-	dig +short myip.opendns.com @resolver1.opendns.com;
+	curl -s https://ipinfo.io/ip;
 }
 
 function test_ssh {
@@ -49,24 +49,25 @@ while [ 1 ]; do
 			break;
 		fi
 
-		for i in $( seq 6 ); do
-			test_ssh $myip
-
-			if [ $? -eq "0" ]; then
-				warn=false
-			else
-				warn=true
-			fi
-
-			if [ "$warn" = true ]; then
-				notify-send "PORT 22 needs fixing."
-				echo "==== PORT 22 IS NOT AVAILABLE. FIX IT. ===="
-			else
-				echo "Port 22 is OK."
-			fi
-
-			sleep 58
-		done
+#		for i in $( seq 6 ); do
+#			test_ssh $myip
+#
+#			if [ $? -eq "0" ]; then
+#				warn=false
+#			else
+#				warn=true
+#			fi
+#
+#			if [ "$warn" = true ]; then
+#				notify-send "PORT 22 needs fixing."
+#				echo "==== PORT 22 IS NOT AVAILABLE. FIX IT. ===="
+#			else
+#				echo "Port 22 is OK."
+#			fi
+#
+#			sleep 60
+#		done
+		sleep 360
 	done
 
 	# Send different, new IP. First try HTTP, then HTTPS
