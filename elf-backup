@@ -51,7 +51,7 @@ esac; shift; done;
 
 # Some pre-processing
 myip=""
-localip="10.0.0.100"
+localip="10.0.1.100"
 if [ $arghome = "true" ]; then
 	myip=$(elf-ip home);
 fi
