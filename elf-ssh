@@ -7,6 +7,7 @@ helpmsg=\
 Where [arguments] can be:
 	home         - ssh to your home workstation
 	lasdpc       - ssh to your lasdpc workstation
+	halley       - ssh to cluster Halley
 ";
 if [ $# -eq 0 ]; then
 	echo "$helpmsg"
@@ -19,4 +20,6 @@ case $1 in
 		ssh -i "$HOME/.ssh/passless" mathjs@`elf-ip home` ;;
 	lasdpc)
 		ssh -i "$HOME/.ssh/passless" mathjs@localhost -p 10000 ;;
+	halley)
+		ssh mhjs@halley.lasdpc.icmc.usp.br -p 22200 ;;
 esac;
