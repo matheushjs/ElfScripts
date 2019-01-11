@@ -1,0 +1,14 @@
+#!/bin/bash
+
+echo $#
+if [ $# == 0 ]; then
+	vim;
+elif [ $# == 1 ]; then
+	vim $1;
+elif [ $# == 2 ]; then
+	vim $2 -c ":vsp $1";
+elif [ $# == 3 ]; then
+	vim $3 -c ":sp $2" -c ":vertical topleft split $1";
+else
+	echo "More than 3 files isn't supported.";
+fi
