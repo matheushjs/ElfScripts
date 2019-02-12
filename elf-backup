@@ -132,41 +132,41 @@ EXCLUDE="--exclude-from=/tmp/rsync-exclude-many.txt"
 # home send
 if   [[ $home_s = "true" ]]; then
 	rsync -v -az -e "ssh -i $HOME/.ssh/passless" \
-		~/ mathjs@$myip:"Shared/lasdpc";
+		~/ mathjs@$myip:"Backup/lasdpc";
 
 # home send delete
 elif [[ $home_sd = "true" ]]; then
 	rsync -v -az --delete --ignore-errors -e "ssh -i $HOME/.ssh/passless" \
-		~/ mathjs@$myip:"Shared/lasdpc";
+		~/ mathjs@$myip:"Backup/lasdpc";
 
 # home get
 elif [[ $home_g = "true" ]]; then
 	rsync -v -auz $EXCLUDE -e "ssh -i $HOME/.ssh/passless" \
-		mathjs@$myip:"Shared/lasdpc/" ~/;
+		mathjs@$myip:"Backup/lasdpc/" ~/;
 
 # local send
 elif [[ $local_s = "true" ]]; then
 	rsync -v -az -e "ssh -i $HOME/.ssh/passless" \
-		~/ mhjs@$localip:"Shared/lasdpc";
+		~/ mhjs@$localip:"Backup/lasdpc";
 
 # local send delete
 elif [[ $local_sd = "true" ]]; then
 	rsync -v -az --delete --ignore-errors -e "ssh -i $HOME/.ssh/passless" \
-		~/ mhjs@$localip:"Shared/lasdpc";
+		~/ mhjs@$localip:"Backup/lasdpc";
 
 # lasdpc send
 elif [[ $lasdpc_s = "true" ]]; then
 	rsync -v -az $EXCLUDE -e "ssh -p 10000 -i $HOME/.ssh/passless" \
-		~/Shared/lasdpc/ mathjs@localhost: ;
+		~/Backup/lasdpc/ mathjs@localhost: ;
 
 # lasdpc send delete
 elif [[ $lasdpc_sd = "true" ]]; then
 	rsync -v -az $EXCLUDE -e "ssh -p 10000 -i $HOME/.ssh/passless" --ignore-errors \
-		~/Shared/lasdpc/ mathjs@localhost: ;
+		~/Backup/lasdpc/ mathjs@localhost: ;
 
 # lasdpc get
 elif [[ $lasdpc_g = "true" ]]; then
 	rsync -v -auz -e "ssh -p 10000 -i $HOME/.ssh/passless" \
-		mathjs@localhost:"./" ~/Shared/lasdpc/;
+		mathjs@localhost:"./" ~/Backup/lasdpc/;
 fi
 
