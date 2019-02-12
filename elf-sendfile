@@ -1,0 +1,89 @@
+#!/bin/bash
+
+arghome=false
+argsend=false
+argget=false
+arglasdpc=false
+arghalley=false
+
+# ==========================
+# Parse User Arguments
+# ==========================
+while [[ "$#" > 0 ]]; do case $1 in
+	home)
+		arghome=true;;
+	send)
+		argsend=true;;
+	get)
+		argget=true;;
+	lasdpc)
+		arglasdpc=true;;
+	halley)
+		arghalley=true;;
+esac; shift; done;
+
+# Some pre-processing
+homeip=""
+if [ $arghome = "true" ]; then
+	homeip=$(elf-ip home);
+fi
+
+home_s=false;
+home_g=false;
+lasdpc_s=false;
+lasdpc_g=false;
+halley_s=false;
+halley_g=false;
+
+# ==========================
+# Decide functionality
+# ==========================
+if   [[ $arghome = "true" && $argsend = "true" ]]; then
+	echo home send;
+	home_s=true;
+elif [[ $arghome = "true" && $argget = "true" ]]; then
+	echo home get;
+	home_g=true;
+elif [[ $arghalley = "true" && $argget = "true" ]]; then
+	echo "halley get";
+	halley_g=true;
+elif [[ $arghalley = "true" && $argsend = "true" ]]; then
+	echo "halley send";
+	halley_s=true;
+elif [[ $arglasdpc = "true" && $argsend = "true" ]]; then
+	echo lasdpc send;
+	lasdpc_s=true;
+elif [[ $arglasdpc = "true" && $argget = "true" ]]; then
+	echo lasdpc get;
+	lasdpc_g=true;
+fi
+
+# ==========================
+# Execute functionality
+# ==========================
+
+# home send
+if   [[ $home_s = "true" ]]; then
+	rsync -v -azL -e "ssh -i $HOME/.ssh/passless" ~/Shared/ mathjs@$homeip:"~/Shared/";
+
+# home get
+elif [[ $home_g = "true" ]]; then
+	rsync -v -azL -e "ssh -i $HOME/.ssh/passless" mathjs@$homeip:"~/Shared/" ~/Shared/;
+
+# halley send
+elif [[ $halley_s = "true" ]]; then
+	rsync -v -azL -e "ssh -p 22200" ~/Shared/ mhjs@halley.lasdpc.icmc.usp.br:"~/Shared/";
+
+# halley get
+elif [[ $halley_g = "true" ]]; then
+	rsync -v -azL -e "ssh -p 22200" mhjs@halley.lasdpc.icmc.usp.br:"~/Shared/" ~/Shared/;
+
+# lasdpc send
+elif [[ $lasdpc_s = "true" ]]; then
+	rsync -v -azL -e "ssh -p 10000 -i $HOME/.ssh/passless" ~/Shared/ mathjs@localhost:"~/Shared/";
+
+# lasdpc get
+elif [[ $lasdpc_g = "true" ]]; then
+	rsync -v -azL -e "ssh -p 10000 -i $HOME/.ssh/passless" mathjs@localhost:"~/Shared/" ~/Shared/;
+fi
+
