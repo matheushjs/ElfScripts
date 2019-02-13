@@ -131,12 +131,12 @@ EXCLUDE="--exclude-from=/tmp/rsync-exclude-many.txt"
 
 # home send
 if   [[ $home_s = "true" ]]; then
-	rsync -v -az -e "ssh -i $HOME/.ssh/passless" \
+	rsync --exclude "Music_home/" -v -az -e "ssh -i $HOME/.ssh/passless" \
 		~/ mathjs@$myip:"Backup/lasdpc";
 
 # home send delete
 elif [[ $home_sd = "true" ]]; then
-	rsync -v -az --delete --ignore-errors -e "ssh -i $HOME/.ssh/passless" \
+	rsync --exclude "Music_home/" -v -az --delete --ignore-errors -e "ssh -i $HOME/.ssh/passless" \
 		~/ mathjs@$myip:"Backup/lasdpc";
 
 # home get
