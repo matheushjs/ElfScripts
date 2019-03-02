@@ -1,5 +1,14 @@
 #!/bin/bash
+
+forwardPort=0;
+
+if [[ "$1" != "" ]]; then
+	forwardPort=$1;
+else
+	forwardPort=10000;
+fi
+
 while [ true ]; do
-	ssh -i "$HOME/.ssh/passless" -N -R 10000:localhost:22 mathjs@`elf-ip home`;
+	ssh -i "$HOME/.ssh/passless" -N -R ${forwardPort}:localhost:22 mathjs@`elf-ip home`;
 	sleep 60;
 done
