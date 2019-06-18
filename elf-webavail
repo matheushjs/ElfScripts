@@ -13,17 +13,28 @@ while [ true ]; do
 	lock+=1;
 
 	# Check if website is working
-	response=$(curl -L -m 5 --write-out %{http_code} -s -o /dev/null http://mjsaldanha.com/myip);
-	if [[ "$?" == "0" && "$response" == "200" ]]; then
-		echo "OK $(date "+%H:%M:%S %d-%m-%y")" >> $logfile;
+	beg=$(date +%s);
+	response=$(curl -L -m 20 --write-out %{http_code} -s -o /dev/null http://mjsaldanha.com/myip);
+	end=$(date +%s);
+	taken=$(( $end - $beg ));
+
+	# If took too long
+	if [[ $taken > 7 ]]; then
+		echo "Website is laaging!" "$(date "+%H:%M:%S %d-%m-%y"). Took $taken seconds"; # Because google.com is working, but our website isnt
+		echo "LAAG $(date "+%H:%M:%S %d-%m-%y") took $taken seconds" >> $logfile;
+		continue;
+	fi
+
+	if [[ "$response" == "200" ]]; then
+		echo "OK $(date "+%H:%M:%S %d-%m-%y") took $taken seconds" >> $logfile;
 		continue;
 	fi # If not working, continue below
 
 	# Check if network is working
 	curl -m 5 google.com &> /dev/null;
 	if [[ "$?" == "0" ]]; then
-		echo "Website is not working!" "$(date "+%H:%M:%S %d-%m-%y")"; # Because google.com is working, but our website isnt
-		echo "FAIL $(date "+%H:%M:%S %d-%m-%y")" >> $logfile;
+		echo "Website is not working!" "$(date "+%H:%M:%S %d-%m-%y"). Took $taken seconds"; # Because google.com is working, but our website isnt
+		echo "FAIL $(date "+%H:%M:%S %d-%m-%y") took $taken seconds" >> $logfile;
 		notify-send "Website is not working!";
 	else
 		echo "False alarm. Network is not working.";
