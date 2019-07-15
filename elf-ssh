@@ -22,7 +22,7 @@ case $1 in
 	lasdpc)
 		ssh -i "$HOME/.ssh/passless" mathjs@localhost -p 10000 ;;
 	halley)
-		ssh mhjs@halley.lasdpc.icmc.usp.br -p 22200 ;;
+		ssh mhjs@andromeda.lasdpc.icmc.usp.br -p 2210 ;;
 	web)
 		ssh 20590-2942@gate.milesweb.cloud -p 3022 ;;
 esac;
