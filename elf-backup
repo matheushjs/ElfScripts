@@ -99,7 +99,7 @@ fi
 # ==========================
 host=$( hostname );
 if [[ $arghome = "true" || $arglocal = "true" ]]; then
-	if [[ $host != "matheushjs-lasdpc" ]]; then
+	if [[ $host != "mathjs-lasdpc" ]]; then
 		echo "ERROR: Command used is only available on LaSDPC workstation!";
 		exit 1;
 	fi
