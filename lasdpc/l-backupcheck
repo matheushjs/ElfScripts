@@ -21,7 +21,7 @@ function backup {
 		elf-backup home get;
 	fi
 	elf-backup home send delete;
-	elf-backup "local" send delete;
+	# elf-backup "local" send delete;
 
 	# Tell user new deadline.
 	echo;
