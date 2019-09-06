@@ -1,71 +1,36 @@
 #!/usr/bin/python3
 
-from tempfile import mktemp
 import os, sys
-import math
-from scipy.io import wavfile
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Create temporary WAV file, and read data from it
-tname = mktemp() + ".wav"
-os.system("ffmpeg -i " + sys.argv[1] + " " + tname)
-samplingRate, data = wavfile.read(tname)
-os.unlink(tname)
+# Refer to https://github.com/jiaaro/pydub/blob/master/API.markdown for the API documentation
+from pydub import AudioSegment
 
-print(samplingRate)
-print(data)
+# Read the file
+audio = AudioSegment.from_mp3(sys.argv[1])
+print("Frame rate:", audio.frame_rate)
 
-# Get information about the number type used to represent the samples
-numInfo = np.iinfo(data.dtype)
-sampleMax = numInfo.max
-sampleMin = numInfo.min
+# Refer to https://en.wikipedia.org/wiki/DBFS (DeciBels relative to Full Scale)
+print("Max dBFS:", audio.max_dBFS)
 
-if numInfo.min == 0:
-    print("We only accept samples encoded in signed integers")
-    sys.exit(1)
+# Get the due numpy array
+samples = np.frombuffer(audio.raw_data, dtype=np.int16)
+nSamples = samples.shape[0]
 
-def is_normalized(data):
-    data = (sampleMax - np.abs(data)) / sampleMax
+# We assume 2 channels, and reshape the array to 2 columns
+samples = samples.reshape(nSamples//2, 2, order="C")
 
-    if (data > 0.2).all():
+def is_normalized(audio):
+    fraction = audio.max / audio.max_possible_amplitude
+
+    if fraction < 0.9:
         return False
     else:
         return True
 
-print(is_normalized(data))
+print(is_normalized(audio))
 
-plt.figure()
-plt.plot(data[:,0])
-plt.show()
-
-#totalSecs = wfile.getnframes() / wfile.getframerate()
-#secs, mins = math.modf(totalSecs / 60) # separates fractional and integer parts
-#mins = int(mins)
-#secs = math.floor(60 * secs)
-
-#print("Length: {}m {}s".format(mins, secs))
-
-sys.exit()
-
-if wfile.getnchannels() == 2:
-    totalFrames = wfile.getnframes()
-
-    channelR = []
-    channelL = []
-
-    for i in range(totalFrames):
-        data = wfile.readframes(1)
-        data = struct.unpack("<2h", data) # Unpack as 2-byte 2s-complement numbers
-        channelR.append(int(data[0]))
-        channelL.append(int(data[1]))
-
-    plt.figure()
-    plt.hist(channelR[0:10000])
-    plt.show()
-else:
-    print("Cannot normalize mono music yet.")
-
-
-# wfile.close()
-# os.unlink(tname)
+# plt.figure()
+# plt.plot(samples[:,0])
+# plt.show()
