@@ -12,6 +12,9 @@ audio = AudioSegment.from_mp3(sys.argv[1])
 print("Frame rate:", audio.frame_rate)
 
 # Refer to https://en.wikipedia.org/wiki/DBFS (DeciBels relative to Full Scale)
+# Also see https://en.wikipedia.org/wiki/Decibel for the formula
+# 10*log10(P / P_0) where P_0 is the reference value (max power)
+# 20*log10(A / A_0) where A_0 is the max amplitude (see the source code of pydub)
 print("Max dBFS:", audio.max_dBFS)
 
 # Get the due numpy array
@@ -30,6 +33,10 @@ def is_normalized(audio):
         return True
 
 print(is_normalized(audio))
+
+# The procedures below DO NOT preserve metadata!
+#audio.normalize(0)
+#audio.export("output.mp3", format="mp3")
 
 # plt.figure()
 # plt.plot(samples[:,0])
