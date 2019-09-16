@@ -41,6 +41,10 @@ def rms(samples):
 
     return np.sqrt(np.sum(mean / mean.size))
 
+# TODO: Calculate rms in decibels
+
+# TODO: Calculate the gain needed to achieve a certain RMS level
+
 print("Normalized:", is_normalized(audio))
 print("RMS:", rms(samples))
 
