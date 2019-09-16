@@ -32,11 +32,17 @@ def is_normalized(audio):
     else:
         return True
 
-def rms(audio):
-    return 10
+def rms(samples):
+    mean = np.power(samples, 2, dtype=np.float64)
+
+    if np.sum(mean < 0) > 0:
+        print("Numeric overflow detected.")
+        sys.exit(1)
+
+    return np.sqrt(np.sum(mean / mean.size))
 
 print("Normalized:", is_normalized(audio))
-print("RMS:", rms(audio))
+print("RMS:", rms(samples))
 
 # The procedures below DO NOT preserve metadata!
 #audio.normalize(0)
