@@ -32,7 +32,11 @@ def is_normalized(audio):
     else:
         return True
 
-print(is_normalized(audio))
+def rms(audio):
+    return 10
+
+print("Normalized:", is_normalized(audio))
+print("RMS:", rms(audio))
 
 # The procedures below DO NOT preserve metadata!
 #audio.normalize(0)
