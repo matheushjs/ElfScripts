@@ -32,6 +32,7 @@ def is_normalized(audio):
     else:
         return True
 
+# Square root of the mean of the square of each sample https://en.wikipedia.org/wiki/Root_mean_square
 def rms(samples):
     mean = np.power(samples, 2, dtype=np.float64)
 
