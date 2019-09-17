@@ -34,13 +34,13 @@ def is_normalized(audio):
 
 # Square root of the mean of the square of each sample https://en.wikipedia.org/wiki/Root_mean_square
 def rms(samples):
-    mean = np.power(samples, 2, dtype=np.float64)
+    powers = np.power(samples, 2, dtype=np.float64)
 
-    if np.sum(mean < 0) > 0:
+    if np.sum(powers < 0) > 0:
         print("Numeric overflow detected.")
         sys.exit(1)
 
-    return np.sqrt(np.sum(mean / mean.size))
+    return np.sqrt(np.mean(powers))
 
 # TODO: Calculate rms in decibels
 
