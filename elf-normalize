@@ -98,7 +98,9 @@ print("Gain: {:.3f} x".format(float(factor)))
 clippingBound = audio.max_possible_amplitude / factor
 normalized = samples.copy()
 idx = normalized[np.abs(normalized) > clippingBound]
-print("A total of {} ({:.3f}%) samples will be clipped.".format(len(idx), len(idx) / len(samples) * 100))
+
+if len(idx) > 0:
+    print("A total of {} ({:.3f}%) samples will be clipped.".format(len(idx), len(idx) / len(samples) * 100))
 
 # If we don't do this, the gain will cause numeric overflow in numpy * operator
 normalized[idx] = clippingBound
@@ -111,6 +113,18 @@ print("Gain(dB):", gainDb)
 
 audio = audio + gainDb
 print("New maximum dBFS:", audio.max_dBFS, "dB")
+
+plt.figure(dpi=150)
+plt.title("Changes made to the song (just a fraction of the song)")
+if factor < 1:
+    plt.plot(samples[:100000,0], c="blue", label="Old")
+    plt.plot(normalized[:100000,0], c="red", label="New")
+else:
+    plt.plot(normalized[:100000,0], c="red", label="New")
+    plt.plot(samples[:100000,0], c="blue", label="Old")
+
+plt.legend()
+plt.show()
 
 # The procedures below DO NOT preserve metadata!
 #audio.normalize(0)
