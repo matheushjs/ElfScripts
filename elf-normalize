@@ -95,22 +95,22 @@ print("Gain: {:.3f} x".format(float(factor)))
 # In the original audio, samples large than 'clippingBound' will be clipped
 clippingBound = audio.max_possible_amplitude / factor
 normalized = samples.copy()
-idx = normalized[np.abs(normalized) > clippingBound]
+idx = np.where(np.abs(normalized) > clippingBound)
 
 if len(idx) > 0:
-    print("A total of {} ({:.3f}%) samples will be clipped.".format(len(idx), len(idx) / len(samples) * 100))
+    print("Samples_Clipped: {} ({:.3f}%)".format(len(idx), len(idx) / len(samples) * 100))
 
 # If we don't do this, the gain will cause numeric overflow in numpy * operator
 normalized[idx] = clippingBound
 normalized = normalized * factor
 
 normalizedMax = max(normalized.max(), -normalized.min())
-diff = abs(audio.max_possible_amplitude - normalizedMax)
+diff = abs(audio.max - normalizedMax)
 gainDb = to_db(diff, audio.max_possible_amplitude)
 print("Gain(dB):", gainDb)
 
 audio = audio + gainDb
-print("New maximum dBFS:", audio.max_dBFS, "dB")
+print("New_Maximum_dBFS:", audio.max_dBFS, "dB")
 
 plt.figure(dpi=150)
 plt.title("Changes made to the song (just a fraction of the song)")
