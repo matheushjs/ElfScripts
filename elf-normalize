@@ -105,8 +105,7 @@ normalized[idx] = clippingBound
 normalized = normalized * factor
 
 normalizedMax = max(normalized.max(), -normalized.min())
-diff = abs(audio.max - normalizedMax)
-gainDb = to_db(diff, audio.max_possible_amplitude)
+gainDb = to_db(normalizedMax, audio.max_possible_amplitude) - audio.max_dBFS
 print("Gain(dB):", gainDb)
 
 print("New_Maximum_dBFS:", to_db(np.max(np.abs(normalized)), audio.max_possible_amplitude), "dB")
