@@ -109,8 +109,8 @@ diff = abs(audio.max - normalizedMax)
 gainDb = to_db(diff, audio.max_possible_amplitude)
 print("Gain(dB):", gainDb)
 
-audio = audio + gainDb
-print("New_Maximum_dBFS:", audio.max_dBFS, "dB")
+print("New_Maximum_dBFS:", to_db(np.max(np.abs(normalized)), audio.max_possible_amplitude), "dB")
+print("New_RMS:", to_db(get_rms(normalized), audio.max_possible_amplitude), "dB")
 
 plt.figure(dpi=150)
 plt.title("Changes made to the song (just a fraction of the song)")
