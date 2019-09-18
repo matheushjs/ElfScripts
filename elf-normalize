@@ -9,11 +9,11 @@ from pydub import AudioSegment
 
 usageStr = \
 """
-Usage: ./{} [--rms=17] input_file
+Usage: ./{} [--rms=-17] input_file
 
 Options:
     -h                Displays this help message.
-    --rms [integer]   The RMS level (in dB) to which we should normalize the song.
+    --rms [float]     The RMS level (in dB) to which we should normalize the song.
 """.format(sys.argv[0])
 
 # Stores arguments passed via comman line
@@ -63,7 +63,7 @@ def is_normalized(audio):
         return True
 
 # Square root of the mean of the square of each sample https://en.wikipedia.org/wiki/Root_mean_square
-def rms(samples):
+def get_rms(samples):
     powers = np.power(samples, 2, dtype=np.float64)
 
     if np.sum(powers < 0) > 0:
@@ -72,15 +72,45 @@ def rms(samples):
 
     return np.sqrt(np.mean(powers))
 
-# TODO: Calculate rms in decibels
+def to_db(value, maxValue):
+    return 20 * np.log10(value / maxValue)
+
+def from_db(valueDb, maxValue):
+    return np.power(10, valueDb/20) * maxValue
+
+# We use the property RMS(a*X) = sqrt(a)*RMS(X)
+def get_rms_normalization_factor(rmsValue, maxValue, normLevelDb=-17):
+    normLevel = from_db(normLevelDb, maxValue)
+    return (normLevel / rmsValue)**2
+
 
 # TODO: Calculate the gain needed to achieve a certain RMS level
 
-print(sys.argv)
 print("Normalized:", is_normalized(audio))
-print("RMS:", rms(samples))
 
-print(cmdArgs)
+rms = get_rms(samples)
+print("RMS:", to_db(rms, audio.max_possible_amplitude), "dB")
+
+factor = get_rms_normalization_factor(rms, audio.max_possible_amplitude)
+print("Gain: {:.3f} x".format(float(factor)))
+
+# In the original audio, samples large than 'clippingBound' will be clipped
+clippingBound = audio.max_possible_amplitude / factor
+normalized = samples.copy()
+idx = normalized[np.abs(normalized) > clippingBound]
+print("A total of {} ({:.3f}%) samples will be clipped.".format(len(idx), len(idx) / len(samples) * 100))
+
+# If we don't do this, the gain will cause numeric overflow in numpy * operator
+normalized[idx] = clippingBound
+normalized = normalized * factor
+
+normalizedMax = max(normalized.max(), -normalized.min())
+diff = abs(audio.max_possible_amplitude - normalizedMax)
+gainDb = to_db(diff, audio.max_possible_amplitude)
+print("Gain(dB):", gainDb)
+
+audio = audio + gainDb
+print("New maximum dBFS:", audio.max_dBFS, "dB")
 
 # The procedures below DO NOT preserve metadata!
 #audio.normalize(0)
