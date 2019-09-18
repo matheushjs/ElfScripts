@@ -84,8 +84,6 @@ def get_rms_normalization_factor(rmsValue, maxValue, normLevelDb=-17):
     return (normLevel / rmsValue)**2
 
 
-# TODO: Calculate the gain needed to achieve a certain RMS level
-
 print("Normalized:", is_normalized(audio))
 
 rms = get_rms(samples)
