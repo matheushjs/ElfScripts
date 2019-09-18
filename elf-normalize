@@ -7,6 +7,36 @@ import numpy as np
 # Refer to https://github.com/jiaaro/pydub/blob/master/API.markdown for the API documentation
 from pydub import AudioSegment
 
+usageStr = \
+"""
+Usage: ./{} [--rms=17] input_file
+
+Options:
+    -h                Displays this help message.
+    --rms [integer]   The RMS level (in dB) to which we should normalize the song.
+""".format(sys.argv[0])
+
+# Stores arguments passed via comman line
+cmdArgs = dict()
+
+if "-h" in sys.argv:
+    print(usageStr)
+    sys.exit(0)
+
+for (cmd, TYP) in [
+                    ("--rms", int)
+                    ]:
+    if cmd in sys.argv:
+        try:
+            idx = sys.argv.index("--rms")
+            val = TYP(sys.argv[idx + 1])
+            sys.argv.pop(idx+1)
+            sys.argv.pop(idx)
+            cmdArgs[cmd] = val
+        except Exception as e:
+            print("Error parsing argument {} : {}!".format(cmd, e))
+            sys.exit(1)
+
 # Read the file
 audio = AudioSegment.from_mp3(sys.argv[1])
 print("Frame rate:", audio.frame_rate)
@@ -46,8 +76,11 @@ def rms(samples):
 
 # TODO: Calculate the gain needed to achieve a certain RMS level
 
+print(sys.argv)
 print("Normalized:", is_normalized(audio))
 print("RMS:", rms(samples))
+
+print(cmdArgs)
 
 # The procedures below DO NOT preserve metadata!
 #audio.normalize(0)
