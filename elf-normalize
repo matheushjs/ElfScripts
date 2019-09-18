@@ -106,6 +106,7 @@ if clipCount > 0:
 normalized[idx] = clippingBound
 normalized = normalized * factor
 
+# TODO: The formula for the gain in decibels is wrong. The one as a multiplicative factor (above) is right
 normalizedMax = np.max(np.abs( [normalized.max(), normalized.min()] ))
 gainDb = to_db(normalizedMax, audio.max_possible_amplitude) - audio.max_dBFS
 print("Gain:", gainDb, "dB")
