@@ -78,10 +78,11 @@ def to_db(value, maxValue):
 def from_db(valueDb, maxValue):
     return np.power(10, valueDb/20) * maxValue
 
-# We use the property RMS(a*X) = sqrt(a)*RMS(X)
+# We use the property RMS(a*X) = a*RMS(X)
 def get_rms_normalization_factor(rmsValue, maxValue, normLevelDb=-17):
     normLevel = from_db(normLevelDb, maxValue)
-    return (normLevel / rmsValue)**2
+    print(normLevel)
+    return normLevel / rmsValue
 
 
 print("Normalized:", is_normalized(audio))
