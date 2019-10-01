@@ -108,7 +108,7 @@ normalized = normalized * factor
 
 # TODO: The formula for the gain in decibels is wrong. The one as a multiplicative factor (above) is right
 normalizedMax = np.max(np.abs( [normalized.max(), normalized.min()] ))
-gainDb = to_db(normalizedMax, audio.max_possible_amplitude) - audio.max_dBFS
+gainDb = to_db(normalizedMax, audio.max)
 print("Gain:", gainDb, "dB")
 
 print("New_Maximum_dBFS:", to_db(np.max(np.abs(normalized)), audio.max_possible_amplitude), "dB")
@@ -125,6 +125,8 @@ else:
 
 plt.legend()
 plt.show()
+
+# NOTE: The ffmpeg command to normalize is: ffmpeg -i never_coming_back.mp3 -af "volume=volume=4.65dB:replaygain=drop" -c:v copy output.mp3
 
 # The procedures below DO NOT preserve metadata!
 #audio.normalize(0)
