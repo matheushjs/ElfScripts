@@ -90,25 +90,29 @@ print("Normalized:", is_normalized(audio))
 rms = get_rms(samples)
 print("RMS:", to_db(rms, audio.max_possible_amplitude), "dB")
 
-factor = get_rms_normalization_factor(rms, audio.max_possible_amplitude)
-print("Gain: {:.3f} x".format(float(factor)))
+factor = float(get_rms_normalization_factor(rms, audio.max_possible_amplitude))
+print("Gain: {:.5f} x".format(factor))
 
 # In the original audio, samples large than 'clippingBound' will be clipped
 clippingBound = audio.max_possible_amplitude / factor
-normalized = samples.copy()
+
+# We need to preserve the values even if they are clipped, so we increase precision
+normalized = samples.astype(np.int32, copy=True)
+normalized.dtype = np.int32 # Was int16
+
+# Calculate number of clipped samples
 idx = np.abs(normalized) > clippingBound
 clipCount = np.sum(idx)
 
 if clipCount > 0:
-    print("Samples_Clipped: {} ({:.3f}%)".format(clipCount, clipCount / len(samples) * 100))
+    print("Samples_Clipped: {} ({:.5f}%)".format(clipCount, clipCount / len(samples) * 100))
 
-# If we don't do this, the gain will cause numeric overflow in numpy * operator
-normalized[idx] = clippingBound
+# Effectively normalize the song
 normalized = normalized * factor
 
-# TODO: The formula for the gain in decibels is wrong. The one as a multiplicative factor (above) is right
+# Calculate gain
 normalizedMax = np.max(np.abs( [normalized.max(), normalized.min()] ))
-gainDb = to_db(normalizedMax, audio.max)
+gainDb = to_db(normalizedMax, audio.max) # NOTE: if normalizedMax is clipped, this will be wrong!
 print("Gain:", gainDb, "dB")
 
 print("New_Maximum_dBFS:", to_db(np.max(np.abs(normalized)), audio.max_possible_amplitude), "dB")
