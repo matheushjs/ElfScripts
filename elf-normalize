@@ -3,42 +3,56 @@
 import os, sys
 import matplotlib.pyplot as plt
 import numpy as np
+import subprocess as sp
+import tempfile
 
 # Refer to https://github.com/jiaaro/pydub/blob/master/API.markdown for the API documentation
 from pydub import AudioSegment
 
 usageStr = \
 """
-Usage: ./{} [--rms=-17] input_file
+Usage: {} [-h] [--rms=-17] [--plot] input_file
+
+By default this program will just output useful information about the song given as argument.
 
 Options:
     -h                Displays this help message.
+    -f                Allows saving the normalized song into the input file.
+    -o filename       Defines the output filename
+    --plot            Plots the difference between original and the RMS normalized song
+    --normalize       Normalize the song. If no output file is provided, the input file is used if "-f" is specified.
     --rms [float]     The RMS level (in dB) to which we should normalize the song.
 """.format(sys.argv[0])
 
 # Stores arguments passed via comman line
 cmdArgs = dict()
 
+cmdArgs["ifile"] = sys.argv[-1]                    # Input file always at the end
+cmdArgs["iext"]  = cmdArgs["ifile"].split(".")[-1] # Extension of input file
+
 if "-h" in sys.argv:
     print(usageStr)
     sys.exit(0)
 
+cmdArgs["-f"] = "-f" in sys.argv
+cmdArgs["--plot"] = "--plot" in sys.argv
+cmdArgs["--normalize"] = "--normalize" in sys.argv
+
 for (cmd, TYP) in [
-                    ("--rms", int)
+                    ("--rms", int),
+                    ("-o", str)
                     ]:
     if cmd in sys.argv:
         try:
-            idx = sys.argv.index("--rms")
+            idx = sys.argv.index(cmd)
             val = TYP(sys.argv[idx + 1])
-            sys.argv.pop(idx+1)
-            sys.argv.pop(idx)
             cmdArgs[cmd] = val
         except Exception as e:
             print("Error parsing argument {} : {}!".format(cmd, e))
             sys.exit(1)
 
 # Read the file
-audio = AudioSegment.from_mp3(sys.argv[1])
+audio = AudioSegment.from_mp3(cmdArgs["ifile"])
 print("Frame rate:", audio.frame_rate)
 
 # Refer to https://en.wikipedia.org/wiki/DBFS (DeciBels relative to Full Scale)
@@ -118,19 +132,44 @@ print("Gain:", gainDb, "dB")
 print("New_Maximum_dBFS:", to_db(np.max(np.abs(normalized)), audio.max_possible_amplitude), "dB")
 print("New_RMS:", to_db(get_rms(normalized), audio.max_possible_amplitude), "dB")
 
-plt.figure(dpi=150)
-plt.title("Changes made to the song (just a fraction of the song)")
-if factor < 1:
-    plt.plot(samples[:100000,0], c="blue", label="Old")
-    plt.plot(normalized[:100000,0], c="red", label="New")
-else:
-    plt.plot(normalized[:100000,0], c="red", label="New")
-    plt.plot(samples[:100000,0], c="blue", label="Old")
+if cmdArgs["--plot"]:
+    plt.figure(dpi=150)
+    plt.title("Changes made to the song (just a fraction of the song)")
+    if factor < 1:
+        plt.plot(samples[:100000,0], c="blue", label="Old")
+        plt.plot(normalized[:100000,0], c="red", label="New")
+    else:
+        plt.plot(normalized[:100000,0], c="red", label="New")
+        plt.plot(samples[:100000,0], c="blue", label="Old")
 
-plt.legend()
-plt.show()
+    plt.legend()
+    plt.show()
 
-# NOTE: The ffmpeg command to normalize is: ffmpeg -i never_coming_back.mp3 -af "volume=volume=4.65dB:replaygain=drop" -c:v copy output.mp3
+if cmdArgs["--normalize"]:
+    # NOTE: The ffmpeg command to normalize is: ffmpeg -i never_coming_back.mp3 -af "volume=volume=4.65dB:replaygain=drop" -c:v copy output.mp3
+    auxFile = tempfile.mktemp() + "." + cmdArgs["iext"]
+    outputFile = ""
+    try:
+        outputFile = cmdArgs["-o"]
+    except Exception:
+        if cmdArgs["-f"]:
+            outputFile = cmdArgs["ifile"]
+        else:
+            print("ERROR: To overwrite the original file, please specify '-f'.")
+            sys.exit(1)
+
+    # Normalize song
+    sp.run([
+        "ffmpeg",
+        "-i", cmdArgs["ifile"],
+        "-af", "volume=volume={}dB:replaygain=drop".format(gainDb),
+        "-c:v", "copy",
+        "-y", # Assume yes
+        auxFile
+    ])
+
+    sp.run(["mv", auxFile, outputFile])
+
 
 # The procedures below DO NOT preserve metadata!
 #audio.normalize(0)
