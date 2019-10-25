@@ -189,7 +189,9 @@ def process_file(ifile, iext):
                 "-y", # Assume yes
                 auxFile
             ],
-            check=True)
+            check=True,
+            stdout=sp.DEVNULL,
+            stderr=sp.DEVNULL)
 
             sp.run(["mv", auxFile, outputFile])
         except Exception as e:
@@ -223,6 +225,7 @@ else:
             }
 
     for ifile in allFiles:
+        print("Processing file '{}'".format(ifile))
         iext = getext(ifile)
 
         try:
