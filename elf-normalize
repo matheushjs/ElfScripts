@@ -24,6 +24,7 @@ Options:
     --plot            Plots the difference between original and the RMS normalized song
     --normalize       Normalize the song. If no output file is provided, the input file is used if "-f" is specified.
     --rms [float]     The RMS level (in dB) to which we should normalize the song.
+    --info            Print useful information (command-line friendly) about the songs
 """.format(sys.argv[0])
 
 # Stores arguments passed via comman line
@@ -36,6 +37,7 @@ if "-h" in sys.argv:
 cmdArgs["-f"] = "-f" in sys.argv
 cmdArgs["--plot"] = "--plot" in sys.argv
 cmdArgs["--normalize"] = "--normalize" in sys.argv
+cmdArgs["--info"] = "--info" in sys.argv
 
 for (cmd, TYP) in [
                     ("--rms", int),
@@ -83,13 +85,17 @@ def process_file(ifile, iext):
     except Exception as e:
         raise(Exception("Audio format not supported. ({})".format(e)))
 
-    print("Frame rate:", audio.frame_rate)
+    def myprint(*args, **kwargs):
+        if cmdArgs["--info"]:
+            print(*args, **kwargs)
+
+    myprint("Frame rate:", audio.frame_rate)
 
     # Refer to https://en.wikipedia.org/wiki/DBFS (DeciBels relative to Full Scale)
     # Also see https://en.wikipedia.org/wiki/Decibel for the formula
     # 10*log10(P / P_0) where P_0 is the reference value (max power)
     # 20*log10(A / A_0) where A_0 is the max amplitude (see the source code of pydub)
-    print("Max dBFS:", audio.max_dBFS)
+    myprint("Max dBFS:", audio.max_dBFS)
 
     # Get the due numpy array
     samples = np.frombuffer(audio.raw_data, dtype=np.int16)
@@ -116,16 +122,15 @@ def process_file(ifile, iext):
     # We use the property RMS(a*X) = a*RMS(X)
     def get_rms_normalization_factor(rmsValue, maxValue, normLevelDb=-17):
         normLevel = from_db(normLevelDb, maxValue)
-        print(normLevel)
         return normLevel / rmsValue
 
-    print("Max-amplitude Normalized:", is_normalized(audio))
+    myprint("Max-amplitude Normalized:", is_normalized(audio))
 
     rms = get_rms(samples)
-    print("RMS:", to_db(rms, audio.max_possible_amplitude), "dB")
+    myprint("RMS:", to_db(rms, audio.max_possible_amplitude), "dB")
 
     factor = float(get_rms_normalization_factor(rms, audio.max_possible_amplitude))
-    print("Gain: {:.5f} x".format(factor))
+    myprint("Gain: {:.5f} x".format(factor))
 
     # In the original audio, samples large than 'clippingBound' will be clipped
     clippingBound = audio.max_possible_amplitude / factor
@@ -147,10 +152,10 @@ def process_file(ifile, iext):
     # Calculate gain
     normalizedMax = np.max(np.abs( [normalized.max(), normalized.min()] ))
     gainDb = to_db(normalizedMax, audio.max) # NOTE: if normalizedMax is clipped, this will be wrong!
-    print("Gain:", gainDb, "dB")
+    myprint("Gain:", gainDb, "dB")
 
-    print("New_Maximum_dBFS:", to_db(np.max(np.abs(normalized)), audio.max_possible_amplitude), "dB")
-    print("New_RMS:", to_db(get_rms(normalized), audio.max_possible_amplitude), "dB")
+    myprint("New_Maximum_dBFS:", to_db(np.max(np.abs(normalized)), audio.max_possible_amplitude), "dB")
+    myprint("New_RMS:", to_db(get_rms(normalized), audio.max_possible_amplitude), "dB")
 
     if cmdArgs["--plot"]:
         plt.figure(dpi=150)
