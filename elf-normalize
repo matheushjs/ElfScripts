@@ -56,6 +56,7 @@ try:
     audio = AudioSegment.from_file(cmdArgs["ifile"], cmdArgs["iext"])
 except Exception as e:
     print("Audio format not supported. (", str(e), ")")
+    sys.exit(1)
 
 print("Frame rate:", audio.frame_rate)
 
@@ -153,6 +154,8 @@ if cmdArgs["--normalize"]:
     # NOTE: The ffmpeg command to normalize is: ffmpeg -i never_coming_back.mp3 -af "volume=volume=4.65dB:replaygain=drop" -c:v copy output.mp3
     auxFile = tempfile.mktemp() + "." + cmdArgs["iext"]
     outputFile = ""
+
+    # If file was provided, OK. If it was not, we overwrite the input file.
     try:
         outputFile = cmdArgs["-o"]
     except Exception:
@@ -163,17 +166,20 @@ if cmdArgs["--normalize"]:
             sys.exit(1)
 
     # Normalize song
-    sp.run([
-        "ffmpeg",
-        "-i", cmdArgs["ifile"],
-        "-af", "volume=volume={}dB:replaygain=drop".format(gainDb),
-        "-c:v", "copy",
-        "-y", # Assume yes
-        auxFile
-    ])
+    try:
+        sp.run([
+            "ffmpeg",
+            "-i", cmdArgs["ifile"],
+            "-af", "volume=volume={}:replaygain=drop".format(factor),
+            "-c:v", "copy",
+            "-y", # Assume yes
+            auxFile
+        ])
 
-    sp.run(["mv", auxFile, outputFile])
-
+        sp.run(["mv", auxFile, outputFile])
+    except Exception as e:
+        print("Error while running external commands (ffmped and mv)")
+        print(e)
 
 # The procedures below DO NOT preserve metadata!
 #audio.normalize(0)
