@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import subprocess as sp
 import tempfile
+import json
 
 # Refer to https://github.com/jiaaro/pydub/blob/master/API.markdown for the API documentation
 from pydub import AudioSegment
@@ -19,6 +20,7 @@ Options:
     -h                Displays this help message.
     -f                Allows saving the normalized song into the input file.
     -o filename       Defines the output filename
+    --dir [dir_path]  All files in the given directory will be processed
     --plot            Plots the difference between original and the RMS normalized song
     --normalize       Normalize the song. If no output file is provided, the input file is used if "-f" is specified.
     --rms [float]     The RMS level (in dB) to which we should normalize the song.
@@ -26,9 +28,6 @@ Options:
 
 # Stores arguments passed via comman line
 cmdArgs = dict()
-
-cmdArgs["ifile"] = sys.argv[-1]                    # Input file always at the end
-cmdArgs["iext"]  = cmdArgs["ifile"].split(".")[-1] # Extension of input file
 
 if "-h" in sys.argv:
     print(usageStr)
@@ -40,7 +39,8 @@ cmdArgs["--normalize"] = "--normalize" in sys.argv
 
 for (cmd, TYP) in [
                     ("--rms", int),
-                    ("-o", str)
+                    ("-o", str),
+                    ("--dir", str)
                     ]:
     if cmd in sys.argv:
         try:
@@ -50,6 +50,19 @@ for (cmd, TYP) in [
         except Exception as e:
             print("Error parsing argument {} : {}!".format(cmd, e))
             sys.exit(1)
+
+if "--dir" in cmdArgs:
+    if os.path.exists(cmdArgs["--dir"]) is False:
+        print("Given directory path does not exist!")
+        sys.exit(1)
+
+    if "-o" in cmdArgs:
+        print("Cannot specify output file when performing directory operations.")
+        sys.exit(1)
+
+if "--dir" not in cmdArgs:
+    cmdArgs["ifile"] = sys.argv[-1]                    # Input file always at the end
+    cmdArgs["iext"]  = cmdArgs["ifile"].split(".")[-1] # Extension of input file
 
 # Checks if the given audio is normalized based on a max-possible-amplitude normalization
 # We use a 10% tolerance from a perfect normalization)
@@ -175,7 +188,8 @@ def process_file(ifile, iext):
                 "-c:v", "copy",
                 "-y", # Assume yes
                 auxFile
-            ])
+            ],
+            check=True)
 
             sp.run(["mv", auxFile, outputFile])
         except Exception as e:
@@ -190,4 +204,35 @@ def process_file(ifile, iext):
     # plt.plot(samples[:,0])
     # plt.show()
 
-process_file(cmdArgs["ifile"], cmdArgs["iext"])
+if "--dir" not in cmdArgs:
+    process_file(cmdArgs["ifile"], cmdArgs["iext"])
+else:
+    allFiles = sp.check_output("find {} -type f".format(cmdArgs["--dir"]).split(" "))
+    allFiles = bytes.decode(allFiles, encoding="utf8")
+    allFiles = allFiles.split("\n")
+
+    supportedFormats = ["mp3", "wma", "m4a", "aac", "wav", "aiff", "flac", "ogg", "oga"]
+    getext = lambda x: x.split(".")[-1]
+
+    # Filter files
+    allFiles = [ i for i in allFiles if getext(i) in supportedFormats ]
+
+    debugInfo = {
+                "exceptions": [],
+                "failedFiles": []
+            }
+
+    for ifile in allFiles:
+        iext = getext(ifile)
+
+        try:
+            process_file(ifile, iext)
+        except Exception as e:
+            print("Exception on file {}: {}".format(ifile, e))
+            debugInfo["exceptions"].append(str(e))
+            debugInfo["failedFiles"].append(ifile)
+
+    if len(debuginfo["exceptions"]) > 0:
+        print("Debug information being dumped to 'elf-normalize.out'")
+        with open("elf-normalize.out", "w") as fp:
+            json.dump(debugInfo, fp)
