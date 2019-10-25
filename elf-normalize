@@ -51,28 +51,10 @@ for (cmd, TYP) in [
             print("Error parsing argument {} : {}!".format(cmd, e))
             sys.exit(1)
 
-# Read the file
-try:
-    audio = AudioSegment.from_file(cmdArgs["ifile"], cmdArgs["iext"])
-except Exception as e:
-    print("Audio format not supported. (", str(e), ")")
-    sys.exit(1)
-
-print("Frame rate:", audio.frame_rate)
-
-# Refer to https://en.wikipedia.org/wiki/DBFS (DeciBels relative to Full Scale)
-# Also see https://en.wikipedia.org/wiki/Decibel for the formula
-# 10*log10(P / P_0) where P_0 is the reference value (max power)
-# 20*log10(A / A_0) where A_0 is the max amplitude (see the source code of pydub)
-print("Max dBFS:", audio.max_dBFS)
-
-# Get the due numpy array
-samples = np.frombuffer(audio.raw_data, dtype=np.int16)
-nSamples = samples.shape[0]
-
-# We assume 2 channels, and reshape the array to 2 columns
-samples = samples.reshape(nSamples//2, 2, order="C")
-
+# Checks if the given audio is normalized based on a max-possible-amplitude normalization
+# We use a 10% tolerance from a perfect normalization)
+#
+# @return True if the given audio is normalized, False otherwise.
 def is_normalized(audio):
     fraction = audio.max / audio.max_possible_amplitude
 
@@ -81,110 +63,131 @@ def is_normalized(audio):
     else:
         return True
 
-# Square root of the mean of the square of each sample https://en.wikipedia.org/wiki/Root_mean_square
-def get_rms(samples):
-    powers = np.power(samples, 2, dtype=np.float64)
-
-    if np.sum(powers < 0) > 0:
-        print("Numeric overflow detected.")
-        sys.exit(1)
-
-    return np.sqrt(np.mean(powers))
-
-def to_db(value, maxValue):
-    return 20 * np.log10(value / maxValue)
-
-def from_db(valueDb, maxValue):
-    return np.power(10, valueDb/20) * maxValue
-
-# We use the property RMS(a*X) = a*RMS(X)
-def get_rms_normalization_factor(rmsValue, maxValue, normLevelDb=-17):
-    normLevel = from_db(normLevelDb, maxValue)
-    print(normLevel)
-    return normLevel / rmsValue
-
-
-print("Normalized:", is_normalized(audio))
-
-rms = get_rms(samples)
-print("RMS:", to_db(rms, audio.max_possible_amplitude), "dB")
-
-factor = float(get_rms_normalization_factor(rms, audio.max_possible_amplitude))
-print("Gain: {:.5f} x".format(factor))
-
-# In the original audio, samples large than 'clippingBound' will be clipped
-clippingBound = audio.max_possible_amplitude / factor
-
-# We need to preserve the values even if they are clipped, so we increase precision
-normalized = samples.astype(np.int32, copy=True)
-normalized.dtype = np.int32 # Was int16
-
-# Calculate number of clipped samples
-idx = np.abs(normalized) > clippingBound
-clipCount = np.sum(idx)
-
-if clipCount > 0:
-    print("Samples_Clipped: {} ({:.5f}%)".format(clipCount, clipCount / len(samples) * 100))
-
-# Effectively normalize the song
-normalized = normalized * factor
-
-# Calculate gain
-normalizedMax = np.max(np.abs( [normalized.max(), normalized.min()] ))
-gainDb = to_db(normalizedMax, audio.max) # NOTE: if normalizedMax is clipped, this will be wrong!
-print("Gain:", gainDb, "dB")
-
-print("New_Maximum_dBFS:", to_db(np.max(np.abs(normalized)), audio.max_possible_amplitude), "dB")
-print("New_RMS:", to_db(get_rms(normalized), audio.max_possible_amplitude), "dB")
-
-if cmdArgs["--plot"]:
-    plt.figure(dpi=150)
-    plt.title("Changes made to the song (just a fraction of the song)")
-    if factor < 1:
-        plt.plot(samples[:100000,0], c="blue", label="Old")
-        plt.plot(normalized[:100000,0], c="red", label="New")
-    else:
-        plt.plot(normalized[:100000,0], c="red", label="New")
-        plt.plot(samples[:100000,0], c="blue", label="Old")
-
-    plt.legend()
-    plt.show()
-
-if cmdArgs["--normalize"]:
-    # NOTE: The ffmpeg command to normalize is: ffmpeg -i never_coming_back.mp3 -af "volume=volume=4.65dB:replaygain=drop" -c:v copy output.mp3
-    auxFile = tempfile.mktemp() + "." + cmdArgs["iext"]
-    outputFile = ""
-
-    # If file was provided, OK. If it was not, we overwrite the input file.
+def process_file(ifile, iext):
+    # Read the file
     try:
-        outputFile = cmdArgs["-o"]
-    except Exception:
-        if cmdArgs["-f"]:
-            outputFile = cmdArgs["ifile"]
-        else:
-            print("ERROR: To overwrite the original file, please specify '-f'.")
-            sys.exit(1)
-
-    # Normalize song
-    try:
-        sp.run([
-            "ffmpeg",
-            "-i", cmdArgs["ifile"],
-            "-af", "volume=volume={}:replaygain=drop".format(factor),
-            "-c:v", "copy",
-            "-y", # Assume yes
-            auxFile
-        ])
-
-        sp.run(["mv", auxFile, outputFile])
+        audio = AudioSegment.from_file(ifile, iext)
     except Exception as e:
-        print("Error while running external commands (ffmped and mv)")
-        print(e)
+        raise(Exception("Audio format not supported. ({})".format(e)))
 
-# The procedures below DO NOT preserve metadata!
-#audio.normalize(0)
-#audio.export("output.mp3", format="mp3")
+    print("Frame rate:", audio.frame_rate)
 
-# plt.figure()
-# plt.plot(samples[:,0])
-# plt.show()
+    # Refer to https://en.wikipedia.org/wiki/DBFS (DeciBels relative to Full Scale)
+    # Also see https://en.wikipedia.org/wiki/Decibel for the formula
+    # 10*log10(P / P_0) where P_0 is the reference value (max power)
+    # 20*log10(A / A_0) where A_0 is the max amplitude (see the source code of pydub)
+    print("Max dBFS:", audio.max_dBFS)
+
+    # Get the due numpy array
+    samples = np.frombuffer(audio.raw_data, dtype=np.int16)
+    nSamples = samples.shape[0]
+
+    # We assume 2 channels, and reshape the array to 2 columns
+    samples = samples.reshape(nSamples//2, 2, order="C")
+
+    # Square root of the mean of the square of each sample https://en.wikipedia.org/wiki/Root_mean_square
+    def get_rms(samples):
+        powers = np.power(samples, 2, dtype=np.float64)
+
+        if np.sum(powers < 0) > 0:
+            raise(Exception("Numeric overflow detected."))
+
+        return np.sqrt(np.mean(powers))
+
+    def to_db(value, maxValue):
+        return 20 * np.log10(value / maxValue)
+
+    def from_db(valueDb, maxValue):
+        return np.power(10, valueDb/20) * maxValue
+
+    # We use the property RMS(a*X) = a*RMS(X)
+    def get_rms_normalization_factor(rmsValue, maxValue, normLevelDb=-17):
+        normLevel = from_db(normLevelDb, maxValue)
+        print(normLevel)
+        return normLevel / rmsValue
+
+    print("Max-amplitude Normalized:", is_normalized(audio))
+
+    rms = get_rms(samples)
+    print("RMS:", to_db(rms, audio.max_possible_amplitude), "dB")
+
+    factor = float(get_rms_normalization_factor(rms, audio.max_possible_amplitude))
+    print("Gain: {:.5f} x".format(factor))
+
+    # In the original audio, samples large than 'clippingBound' will be clipped
+    clippingBound = audio.max_possible_amplitude / factor
+
+    # We need to preserve the values even if they are clipped, so we increase precision
+    normalized = samples.astype(np.int32, copy=True)
+    normalized.dtype = np.int32 # Was int16
+
+    # Calculate number of clipped samples
+    idx = np.abs(normalized) > clippingBound
+    clipCount = np.sum(idx)
+
+    if clipCount > 0:
+        print("Samples_Clipped: {} ({:.5f}%)".format(clipCount, clipCount / len(samples) * 100))
+
+    # Effectively normalize the song
+    normalized = normalized * factor
+
+    # Calculate gain
+    normalizedMax = np.max(np.abs( [normalized.max(), normalized.min()] ))
+    gainDb = to_db(normalizedMax, audio.max) # NOTE: if normalizedMax is clipped, this will be wrong!
+    print("Gain:", gainDb, "dB")
+
+    print("New_Maximum_dBFS:", to_db(np.max(np.abs(normalized)), audio.max_possible_amplitude), "dB")
+    print("New_RMS:", to_db(get_rms(normalized), audio.max_possible_amplitude), "dB")
+
+    if cmdArgs["--plot"]:
+        plt.figure(dpi=150)
+        plt.title("Changes made to the song (just a fraction of the song)")
+        if factor < 1:
+            plt.plot(samples[:100000,0], c="blue", label="Old")
+            plt.plot(normalized[:100000,0], c="red", label="New")
+        else:
+            plt.plot(normalized[:100000,0], c="red", label="New")
+            plt.plot(samples[:100000,0], c="blue", label="Old")
+
+        plt.legend()
+        plt.show()
+
+    if cmdArgs["--normalize"]:
+        # NOTE: The ffmpeg command to normalize is: ffmpeg -i never_coming_back.mp3 -af "volume=volume=4.65dB:replaygain=drop" -c:v copy output.mp3
+        auxFile = tempfile.mktemp() + "." + iext
+        outputFile = ""
+
+        # If file was provided, OK. If it was not, we overwrite the input file.
+        try:
+            outputFile = cmdArgs["-o"]
+        except Exception:
+            if cmdArgs["-f"]:
+                outputFile = ifile
+            else:
+                raise(Exception("ERROR: To overwrite the original file, please specify '-f'."))
+
+        # Normalize song
+        try:
+            sp.run([
+                "ffmpeg",
+                "-i", ifile,
+                "-af", "volume=volume={}:replaygain=drop".format(factor),
+                "-c:v", "copy",
+                "-y", # Assume yes
+                auxFile
+            ])
+
+            sp.run(["mv", auxFile, outputFile])
+        except Exception as e:
+            print("Error while running external commands (ffmpeg and mv)")
+            print(e)
+
+    # The procedures below DO NOT preserve metadata!
+    #audio.normalize(0)
+    #audio.export("output.mp3", format="mp3")
+
+    # plt.figure()
+    # plt.plot(samples[:,0])
+    # plt.show()
+
+process_file(cmdArgs["ifile"], cmdArgs["iext"])
