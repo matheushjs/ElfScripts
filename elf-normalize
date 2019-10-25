@@ -240,7 +240,7 @@ else:
             debugInfo["exceptions"].append(str(e))
             debugInfo["failedFiles"].append(ifile)
 
-    if len(debuginfo["exceptions"]) > 0:
+    if len(debugInfo["exceptions"]) > 0:
         print("Debug information being dumped to 'elf-normalize.out'")
         with open("elf-normalize.out", "w") as fp:
             json.dump(debugInfo, fp)
