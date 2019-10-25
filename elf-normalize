@@ -52,7 +52,11 @@ for (cmd, TYP) in [
             sys.exit(1)
 
 # Read the file
-audio = AudioSegment.from_mp3(cmdArgs["ifile"])
+try:
+    audio = AudioSegment.from_file(cmdArgs["ifile"], cmdArgs["iext"])
+except Exception as e:
+    print("Audio format not supported. (", str(e), ")")
+
 print("Frame rate:", audio.frame_rate)
 
 # Refer to https://en.wikipedia.org/wiki/DBFS (DeciBels relative to Full Scale)
