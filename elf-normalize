@@ -96,7 +96,7 @@ else:
 if "--rms" in cmdArgs:
     cmdArgs["--rms"] = -abs(cmdArgs["--rms"])
 else:
-    cmdArgs["--rms"] = -20.0
+    cmdArgs["--rms"] = -10.0
 
 # Checks if the given audio is normalized based on a max-possible-amplitude normalization
 # We use a 10% tolerance from a perfect normalization)
