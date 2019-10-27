@@ -67,7 +67,7 @@ if "--dir" not in cmdArgs:
     cmdArgs["iext"]  = cmdArgs["ifile"].split(".")[-1] # Extension of input file
 
 if "--rms" in cmdArgs:
-    cmdArgs["--rms"] == -abs(cmdArgs["--rms"])
+    cmdArgs["--rms"] = -abs(cmdArgs["--rms"])
 else:
     cmdArgs["--rms"] = -20.0
 
