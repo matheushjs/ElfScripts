@@ -84,7 +84,7 @@ if "-c:v" in cmdArgs:
     # If only one encoder is given
     if len(CV[0]) == 1:
         for key in defaultCV:
-            defaultCV[key] = CV[0]
+            defaultCV[key] = CV[0][0]
     else:
         # If a dictionary of encoders is given
         CV = dict(CV)
@@ -235,6 +235,7 @@ def process_file(ifile, iext):
                 raise(Exception("ERROR: To overwrite the original file, please specify '-f'."))
 
         # Normalize song
+        stderr = open(tempfile.mktemp(), "w+")
         try:
             sp.run([
                 "ffmpeg",
@@ -242,16 +243,19 @@ def process_file(ifile, iext):
                 "-af", "volume=volume={}:replaygain=drop".format(factor),
                 "-c:v", cmdArgs["-c:v"][iext],
                 "-y", # Assume yes
+                "-loglevel", "warning",
                 auxFile
             ],
             check=True,
             stdout=sp.DEVNULL,
-            stderr=sp.DEVNULL)
-
+            stderr=stderr)
             sp.run(["mv", auxFile, outputFile])
         except Exception as e:
             print("Error while running external commands (ffmpeg and mv)")
+            stderr.seek(0)
             print(e)
+            print(stderr.read())
+        stderr.close()
 
     # The procedures below DO NOT preserve metadata!
     #audio.normalize(0)
