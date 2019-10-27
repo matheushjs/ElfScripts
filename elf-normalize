@@ -112,29 +112,29 @@ def process_file(ifile, iext):
 
     # Square root of the mean of the square of each sample https://en.wikipedia.org/wiki/Root_mean_square
     # NOTE: A nice strategy could be calculate rms over all 1- or 5-second windows, and let the rms be the maximum one
-    def get_rms(samples, freq=44100, channels=2):
+    def get_rms(samples, freq=44100, channels=2, p=4):
         # Below gave nice results too. Could investigate it further
         # powers = 20*np.log10(np.abs(samples, dtype=np.float64) + 1)
         # powers = np.power(powers * (np.max(samples) / np.max(powers)), 2, dtype=np.float64)
 
-        windowSize = freq * channels
+        windowSize = round(freq * channels * 0.4) # 0.4 seconds
         myprint("No. Windows:", samples.size // windowSize)
 
         # If there are less than 10 windows, do the usual normalization
         if samples.size / windowSize < 10:
-            powers = np.power(samples, 2, dtype=np.float64)
+            powers = np.power(samples, p, dtype=np.float64)
         else:
             # Else downsample the song by max-pooling each window
             # TODO: We must use some overlapping here.
             powers = samples.ravel()
             powers = powers[0:len(powers) - len(powers)%windowSize]
             powers = np.max(np.abs(powers.reshape(-1, windowSize)), axis=1)
-            powers = np.power(powers, 2, dtype=np.float64)
+            powers = np.power(powers, p, dtype=np.float64)
 
         if np.sum(powers < 0) > 0:
             raise(Exception("Numeric overflow detected."))
 
-        return np.sqrt(np.mean(powers))
+        return np.power(np.mean(powers), 1/p)
 
     def to_db(value, maxValue):
         return 20 * np.log10(value / maxValue)
