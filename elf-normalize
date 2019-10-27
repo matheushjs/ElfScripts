@@ -40,7 +40,7 @@ cmdArgs["--normalize"] = "--normalize" in sys.argv
 cmdArgs["--info"] = "--info" in sys.argv
 
 for (cmd, TYP) in [
-                    ("--rms", int),
+                    ("--rms", float),
                     ("-o", str),
                     ("--dir", str)
                     ]:
@@ -65,6 +65,11 @@ if "--dir" in cmdArgs:
 if "--dir" not in cmdArgs:
     cmdArgs["ifile"] = sys.argv[-1]                    # Input file always at the end
     cmdArgs["iext"]  = cmdArgs["ifile"].split(".")[-1] # Extension of input file
+
+if "--rms" in cmdArgs:
+    cmdArgs["--rms"] == -abs(cmdArgs["--rms"])
+else:
+    cmdArgs["--rms"] = -20.0
 
 # Checks if the given audio is normalized based on a max-possible-amplitude normalization
 # We use a 10% tolerance from a perfect normalization)
@@ -129,7 +134,7 @@ def process_file(ifile, iext):
     rms = get_rms(samples)
     myprint("RMS:", to_db(rms, audio.max_possible_amplitude), "dB")
 
-    factor = float(get_rms_normalization_factor(rms, audio.max_possible_amplitude))
+    factor = float(get_rms_normalization_factor(rms, audio.max_possible_amplitude, cmdArgs["--rms"]))
     myprint("Gain: {:.5f} x".format(factor))
 
     # In the original audio, samples large than 'clippingBound' will be clipped
