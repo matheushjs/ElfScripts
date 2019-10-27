@@ -10,27 +10,36 @@ import json
 # Refer to https://github.com/jiaaro/pydub/blob/master/API.markdown for the API documentation
 from pydub import AudioSegment
 
+SUPPORTED_FORMATS = ["mp3", "wma", "m4a", "aac", "wav", "aiff", "flac", "ogg", "oga"]
+
 usageStr = \
 """
 Usage: {} [-h] [--rms=-17] [--plot] input_file
 
 By default this program will just output useful information about the song given as argument.
 
-Options:
+Options
     -h                Displays this help message.
     -f                Allows saving the normalized song into the input file.
     -o filename       Defines the output filename
+    -c:v [encoders]   Sets the encoder to use for album artwork (see Details).
     --dir [dir_path]  All files in the given directory will be processed
     --plot            Plots the difference between original and the RMS normalized song
     --normalize       Normalize the song. If no output file is provided, the input file is used if "-f" is specified.
     --rms [float]     The RMS level (in dB) to which we should normalize the song.
     --info            Print useful information (command-line friendly) about the songs
+
+Details
+    -c:v
+        Sets the encoder to use for album artwork. A single value can be specified, such as "copy", or an encoder for
+        each file type can be specified by using [extension]=[encoder] pairs separated by ":". An example is as follows
+        -c:v mp3=mjpeg:m4a=libx264
 """.format(sys.argv[0])
 
 # Stores arguments passed via comman line
 cmdArgs = dict()
 
-if "-h" in sys.argv:
+if "-h" in sys.argv or len(sys.argv) == 1:
     print(usageStr)
     sys.exit(0)
 
@@ -42,7 +51,8 @@ cmdArgs["--info"] = "--info" in sys.argv
 for (cmd, TYP) in [
                     ("--rms", float),
                     ("-o", str),
-                    ("--dir", str)
+                    ("--dir", str),
+                    ("-c:v", str)
                     ]:
     if cmd in sys.argv:
         try:
@@ -65,6 +75,23 @@ if "--dir" in cmdArgs:
 if "--dir" not in cmdArgs:
     cmdArgs["ifile"] = sys.argv[-1]                    # Input file always at the end
     cmdArgs["iext"]  = cmdArgs["ifile"].split(".")[-1] # Extension of input file
+
+defaultCV = dict([ (ext, "copy") for ext in SUPPORTED_FORMATS ])
+if "-c:v" in cmdArgs:
+    CV = cmdArgs["-c:v"].split(":")
+    CV = [ enc.split("=") for enc in CV ]
+
+    # If only one encoder is given
+    if len(CV[0]) == 1:
+        for key in defaultCV:
+            defaultCV[key] = CV[0]
+    else:
+        # If a dictionary of encoders is given
+        CV = dict(CV)
+        defaultCV.update(CV)
+    cmdArgs["-c:v"] = defaultCV
+else:
+    cmdArgs["-c:v"] = defaultCV
 
 if "--rms" in cmdArgs:
     cmdArgs["--rms"] = -abs(cmdArgs["--rms"])
@@ -213,7 +240,7 @@ def process_file(ifile, iext):
                 "ffmpeg",
                 "-i", ifile,
                 "-af", "volume=volume={}:replaygain=drop".format(factor),
-                "-c:v", "copy",
+                "-c:v", cmdArgs["-c:v"][iext],
                 "-y", # Assume yes
                 auxFile
             ],
@@ -241,11 +268,10 @@ else:
     allFiles = bytes.decode(allFiles, encoding="utf8")
     allFiles = allFiles.split("\n")
 
-    supportedFormats = ["mp3", "wma", "m4a", "aac", "wav", "aiff", "flac", "ogg", "oga"]
     getext = lambda x: x.split(".")[-1]
 
     # Filter files
-    allFiles = [ i for i in allFiles if getext(i) in supportedFormats ]
+    allFiles = [ i for i in allFiles if getext(i) in SUPPORTED_FORMATS ]
 
     debugInfo = {
                 "exceptions": [],
