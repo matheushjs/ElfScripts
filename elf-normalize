@@ -10,6 +10,8 @@ import json
 # Refer to https://github.com/jiaaro/pydub/blob/master/API.markdown for the API documentation
 from pydub import AudioSegment
 
+# TODO: Allow the user to have more control over ffmpeg (output format & c:a for example)
+
 SUPPORTED_FORMATS = ["mp3", "wma", "m4a", "aac", "wav", "aiff", "flac", "ogg", "oga"]
 
 usageStr = \
@@ -251,10 +253,8 @@ def process_file(ifile, iext):
             stderr=stderr)
             sp.run(["mv", auxFile, outputFile])
         except Exception as e:
-            print("Error while running external commands (ffmpeg and mv)")
             stderr.seek(0)
-            print(e)
-            print(stderr.read())
+            raise Exception("Error while running external commands (ffmpeg and mv)\n{}\n{}".format(e, stderr.read()))
         stderr.close()
 
     # The procedures below DO NOT preserve metadata!
@@ -296,4 +296,4 @@ else:
     if len(debugInfo["exceptions"]) > 0:
         print("Debug information being dumped to 'elf-normalize.out'")
         with open("elf-normalize.out", "w") as fp:
-            json.dump(debugInfo, fp)
+            json.dump(debugInfo, fp, indent=2)
