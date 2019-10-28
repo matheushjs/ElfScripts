@@ -38,67 +38,68 @@ Details
         -c:v mp3=mjpeg:m4a=libx264
 """.format(sys.argv[0])
 
-# Stores arguments passed via comman line
+# Stores arguments passed via command line
 cmdArgs = dict()
 
-if "-h" in sys.argv or len(sys.argv) == 1:
-    print(usageStr)
-    sys.exit(0)
+def parse_arguments():
+    if "-h" in sys.argv or len(sys.argv) == 1:
+        print(usageStr)
+        sys.exit(0)
 
-cmdArgs["-f"] = "-f" in sys.argv
-cmdArgs["--plot"] = "--plot" in sys.argv
-cmdArgs["--normalize"] = "--normalize" in sys.argv
-cmdArgs["--info"] = "--info" in sys.argv
+    cmdArgs["-f"] = "-f" in sys.argv
+    cmdArgs["--plot"] = "--plot" in sys.argv
+    cmdArgs["--normalize"] = "--normalize" in sys.argv
+    cmdArgs["--info"] = "--info" in sys.argv
 
-for (cmd, TYP) in [
-                    ("--rms", float),
-                    ("-o", str),
-                    ("--dir", str),
-                    ("-c:v", str)
-                    ]:
-    if cmd in sys.argv:
-        try:
-            idx = sys.argv.index(cmd)
-            val = TYP(sys.argv[idx + 1])
-            cmdArgs[cmd] = val
-        except Exception as e:
-            print("Error parsing argument {} : {}!".format(cmd, e))
+    for (cmd, TYP) in [
+                        ("--rms", float),
+                        ("-o", str),
+                        ("--dir", str),
+                        ("-c:v", str)
+                        ]:
+        if cmd in sys.argv:
+            try:
+                idx = sys.argv.index(cmd)
+                val = TYP(sys.argv[idx + 1])
+                cmdArgs[cmd] = val
+            except Exception as e:
+                print("Error parsing argument {} : {}!".format(cmd, e))
+                sys.exit(1)
+
+    if "--dir" in cmdArgs:
+        if os.path.exists(cmdArgs["--dir"]) is False:
+            print("Given directory path does not exist!")
             sys.exit(1)
 
-if "--dir" in cmdArgs:
-    if os.path.exists(cmdArgs["--dir"]) is False:
-        print("Given directory path does not exist!")
-        sys.exit(1)
+        if "-o" in cmdArgs:
+            print("Cannot specify output file when performing directory operations.")
+            sys.exit(1)
 
-    if "-o" in cmdArgs:
-        print("Cannot specify output file when performing directory operations.")
-        sys.exit(1)
+    if "--dir" not in cmdArgs:
+        cmdArgs["ifile"] = sys.argv[-1]                    # Input file always at the end
+        cmdArgs["iext"]  = cmdArgs["ifile"].split(".")[-1] # Extension of input file
 
-if "--dir" not in cmdArgs:
-    cmdArgs["ifile"] = sys.argv[-1]                    # Input file always at the end
-    cmdArgs["iext"]  = cmdArgs["ifile"].split(".")[-1] # Extension of input file
+    defaultCV = dict([ (ext, "copy") for ext in SUPPORTED_FORMATS ])
+    if "-c:v" in cmdArgs:
+        CV = cmdArgs["-c:v"].split(":")
+        CV = [ enc.split("=") for enc in CV ]
 
-defaultCV = dict([ (ext, "copy") for ext in SUPPORTED_FORMATS ])
-if "-c:v" in cmdArgs:
-    CV = cmdArgs["-c:v"].split(":")
-    CV = [ enc.split("=") for enc in CV ]
-
-    # If only one encoder is given
-    if len(CV[0]) == 1:
-        for key in defaultCV:
-            defaultCV[key] = CV[0][0]
+        # If only one encoder is given
+        if len(CV[0]) == 1:
+            for key in defaultCV:
+                defaultCV[key] = CV[0][0]
+        else:
+            # If a dictionary of encoders is given
+            CV = dict(CV)
+            defaultCV.update(CV)
+        cmdArgs["-c:v"] = defaultCV
     else:
-        # If a dictionary of encoders is given
-        CV = dict(CV)
-        defaultCV.update(CV)
-    cmdArgs["-c:v"] = defaultCV
-else:
-    cmdArgs["-c:v"] = defaultCV
+        cmdArgs["-c:v"] = defaultCV
 
-if "--rms" in cmdArgs:
-    cmdArgs["--rms"] = -abs(cmdArgs["--rms"])
-else:
-    cmdArgs["--rms"] = -10.0
+    if "--rms" in cmdArgs:
+        cmdArgs["--rms"] = -abs(cmdArgs["--rms"])
+    else:
+        cmdArgs["--rms"] = -10.0
 
 # Checks if the given audio is normalized based on a max-possible-amplitude normalization
 # We use a 10% tolerance from a perfect normalization)
@@ -264,6 +265,15 @@ def process_file(ifile, iext):
     # plt.figure()
     # plt.plot(samples[:,0])
     # plt.show()
+
+
+
+
+##########################
+#     MAIN CODE          #
+##########################
+
+parse_arguments()
 
 if "--dir" not in cmdArgs:
     process_file(cmdArgs["ifile"], cmdArgs["iext"])
