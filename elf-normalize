@@ -249,7 +249,8 @@ def process_file(ifile, iext, oext="same"):
                     s = ifile.split(".")
                     s[-1] = oext
                     outputFile = ".".join(s)
-                    eraseFile = ifile
+                    if ifile != outputFile:
+                        eraseFile = ifile
             else:
                 raise(Exception("ERROR: To overwrite the original file, please specify '-f'."))
 
