@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import subprocess as sp
 import tempfile
+import shutil
 import json
 
 # Refer to https://github.com/jiaaro/pydub/blob/master/API.markdown for the API documentation
@@ -16,7 +17,7 @@ SUPPORTED_FORMATS = ["mp3", "wma", "m4a", "aac", "wav", "aiff", "flac", "ogg", "
 
 usageStr = \
 """
-Usage: {} [-h] [--rms=-17] [--plot] input_file
+Usage: {} [options] input_file
 
 By default this program will just output useful information about the song given as argument.
 
@@ -30,6 +31,7 @@ Options
     --normalize       Normalize the song. If no output file is provided, the input file is used if "-f" is specified.
     --rms [float]     The RMS level (in dB) to which we should normalize the song.
     --info            Print useful information (command-line friendly) about the songs
+    --oext            Defines the output extension to use for the output file when performing a directory operation (old file is erased).
 
 Details
     -c:v
@@ -55,7 +57,8 @@ def parse_arguments():
                         ("--rms", float),
                         ("-o", str),
                         ("--dir", str),
-                        ("-c:v", str)
+                        ("-c:v", str),
+                        ("--oext", str)
                         ]:
         if cmd in sys.argv:
             try:
@@ -101,6 +104,9 @@ def parse_arguments():
     else:
         cmdArgs["--rms"] = -10.0
 
+    if "--oext" not in cmdArgs:
+        cmdArgs["--oext"] = "same"
+
 # Checks if the given audio is normalized based on a max-possible-amplitude normalization
 # We use a 10% tolerance from a perfect normalization)
 #
@@ -113,7 +119,7 @@ def is_normalized(audio):
     else:
         return True
 
-def process_file(ifile, iext):
+def process_file(ifile, iext, oext="same"):
     # Read the file
     try:
         audio = AudioSegment.from_file(ifile, iext)
@@ -225,15 +231,25 @@ def process_file(ifile, iext):
 
     if cmdArgs["--normalize"]:
         # NOTE: The ffmpeg command to normalize is: ffmpeg -i never_coming_back.mp3 -af "volume=volume=4.65dB:replaygain=drop" -c:v copy output.mp3
-        auxFile = tempfile.mktemp() + "." + iext
+        if oext is "same":
+            auxFile = tempfile.mktemp() + "." + iext
+        else:
+            auxFile = tempfile.mktemp() + "." + oext
         outputFile = ""
+        eraseFile  = ""
 
         # If file was provided, OK. If it was not, we overwrite the input file.
         try:
             outputFile = cmdArgs["-o"]
         except Exception:
             if cmdArgs["-f"]:
-                outputFile = ifile
+                if oext is "same":
+                    outputFile = ifile
+                else:
+                    s = ifile.split(".")
+                    s[-1] = oext
+                    outputFile = ".".join(s)
+                    eraseFile = ifile
             else:
                 raise(Exception("ERROR: To overwrite the original file, please specify '-f'."))
 
@@ -252,7 +268,10 @@ def process_file(ifile, iext):
             check=True,
             stdout=sp.DEVNULL,
             stderr=stderr)
-            sp.run(["mv", auxFile, outputFile])
+
+            shutil.move(auxFile, outputFile)
+            if eraseFile:
+                os.unlink(eraseFile)
         except Exception as e:
             stderr.seek(0)
             raise Exception("Error while running external commands (ffmpeg and mv)\n{}\n{}".format(e, stderr.read()))
@@ -297,7 +316,7 @@ else:
         iext = getext(ifile)
 
         try:
-            process_file(ifile, iext)
+            process_file(ifile, iext, cmdArgs["--oext"])
         except Exception as e:
             print("Exception on file {}: {}".format(ifile, e))
             debugInfo["exceptions"].append(str(e))
