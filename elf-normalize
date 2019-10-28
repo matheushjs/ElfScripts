@@ -305,14 +305,16 @@ else:
 
     # Filter files
     allFiles = [ i for i in allFiles if getext(i) in SUPPORTED_FORMATS ]
+    allFiles = sorted(allFiles)
+    nFiles = len(allFiles)
 
     debugInfo = {
                 "exceptions": [],
                 "failedFiles": []
             }
 
-    for ifile in allFiles:
-        print("Processing file '{}'".format(ifile))
+    for idx, ifile in enumerate(allFiles):
+        print("({}/{}) Processing file '{}' ".format(idx+1, nFiles, ifile))
         iext = getext(ifile)
 
         try:
