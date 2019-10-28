@@ -295,7 +295,10 @@ def process_file(ifile, iext, oext="same"):
 parse_arguments()
 
 if "--dir" not in cmdArgs:
-    process_file(cmdArgs["ifile"], cmdArgs["iext"])
+    if "-o" in cmdArgs:
+        process_file(cmdArgs["ifile"], cmdArgs["iext"], cmdArgs["-o"].split(".")[-1])
+    else:
+        process_file(cmdArgs["ifile"], cmdArgs["iext"])
 else:
     allFiles = sp.check_output("find {} -type f".format(cmdArgs["--dir"]).split(" "))
     allFiles = bytes.decode(allFiles, encoding="utf8")
