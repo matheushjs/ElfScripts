@@ -13,7 +13,7 @@ from pydub import AudioSegment
 
 # TODO: Allow the user to have more control over ffmpeg (output format & c:a for example)
 
-SUPPORTED_FORMATS = ["mp3", "wma", "m4a", "aac", "wav", "aiff", "flac", "ogg", "oga"]
+SUPPORTED_FORMATS = ["mp3", "wma", "m4a", "aac", "wav", "aiff", "flac", "ogg", "oga", "webm"]
 
 usageStr = \
 """
