@@ -163,6 +163,7 @@ def process_file(ifile, iext, oext="same"):
             # Else downsample the song by max-pooling each window
             # TODO: We must use some overlapping here.
             powers = samples.ravel()
+            # Discard some samples so that it is evenly divided
             powers = powers[0:len(powers) - len(powers)%windowSize]
             powers = np.max(np.abs(powers.reshape(-1, windowSize)), axis=1)
             powers = np.power(powers, p, dtype=np.float64)
